@@ -51,6 +51,20 @@
             border-radius: 10px;
             transition: width 0.3s ease;
         }
+        .stage-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .project-card {
+            transition: all 0.2s ease;
+            border-left: 4px solid;
+        }
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="bg-white">
@@ -131,6 +145,23 @@
 
             <!-- Правая колонка - детальная информация -->
             <div class="lg:col-span-3 space-y-8">
+                <!-- Текущие проекты в разработке -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i data-feather="clock" class="text-orange-600"></i>
+                            Текущие проекты в разработке
+                        </h2>
+                        <div class="text-sm text-gray-500">
+                            Активных проектов: <span id="activeProjectsCount">0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="activeProjects" class="space-y-4">
+                        <p class="text-gray-500">Загрузка...</p>
+                    </div>
+                </div>
+
                 <!-- Достижения и награды -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -158,7 +189,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-semibold flex items-center gap-2">
                             <i data-feather="folder" class="text-purple-600"></i>
-                            Проекты сотрудника
+                            Все проекты сотрудника
                         </h2>
                         <div class="text-sm text-gray-500">
                             Всего проектов: <span id="totalProjectsCount">0</span>
@@ -261,7 +292,6 @@
                     clientSatisfaction: "4.7/5"
                 }
             },
-            // Добавлю данные для остальных сотрудников...
             5: {
                 experience: "5 лет в управлении проектами",
                 level: "Старший специалист",
@@ -368,6 +398,7 @@
                 const userData = localStorage.getItem('viewing_user_profile');
                 if (userData) {
                     currentUser = JSON.parse(userData);
+                    console.log('Текущий пользователь:', currentUser);
                     displayUserInfo(currentUser);
                     displayUserDetails(currentUser);
                 } else {
@@ -378,11 +409,25 @@
                 // Загружаем проекты
                 try {
                     allProjects = await api.getProjects();
+                    console.log('Проекты из API:', allProjects.length);
                 } catch (error) {
+                    console.log('API недоступен, загружаем из localStorage');
                     allProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+                    console.log('Проекты из localStorage:', allProjects.length);
                 }
                 
+                // Если проектов нет, создаем тестовые
+                if (allProjects.length === 0) {
+                    console.log('Создаем тестовые проекты');
+                    allProjects = generateTestProjects();
+                    localStorage.setItem('projects', JSON.stringify(allProjects));
+                }
+                
+                console.log('Всего проектов:', allProjects.length);
+                console.log('Проекты текущего пользователя:', allProjects.filter(p => p.manager === currentUser.full_name).length);
+                
                 displayUserProjects();
+                displayActiveProjects();
             } catch (error) {
                 console.error('Error loading profile:', error);
                 showErrorPage();
@@ -390,6 +435,99 @@
 
             feather.replace();
         });
+
+        function generateTestProjects() {
+            const projects = [];
+            const users = [
+                { id: 1, name: "Иван Петров" },
+                { id: 2, name: "Мария Сидорова" },
+                { id: 3, name: "Алексей Козлов" },
+                { id: 5, name: "Дмитрий Новиков" },
+                { id: 19, name: "Сергей Васильев" },
+                { id: 23, name: "Андрей Павлов" }
+            ];
+
+            const projectTemplates = [
+                {
+                    name: "Внедрение CRM системы",
+                    organization: "РосНефть",
+                    service: "cloud",
+                    stage: "implementation",
+                    status: "in_progress",
+                    revenue: 2500000,
+                    expenses: 800000,
+                    priority: "high",
+                    description: "Внедрение корпоративной CRM системы для автоматизации продаж"
+                },
+                {
+                    name: "Разработка мобильного приложения",
+                    organization: "Сбербанк",
+                    service: "consulting",
+                    stage: "analysis",
+                    status: "active",
+                    revenue: 1800000,
+                    expenses: 450000,
+                    priority: "medium",
+                    description: "Консалтинг по разработке мобильного банковского приложения"
+                },
+                {
+                    name: "Миграция в облако",
+                    organization: "Газпром",
+                    service: "cloud",
+                    stage: "negotiation",
+                    status: "active",
+                    revenue: 3200000,
+                    expenses: 1200000,
+                    priority: "critical",
+                    description: "Перенос корпоративной инфраструктуры в облачную платформу"
+                },
+                {
+                    name: "Аудит безопасности",
+                    organization: "ВТБ",
+                    service: "security",
+                    stage: "testing",
+                    status: "in_progress",
+                    revenue: 1500000,
+                    expenses: 400000,
+                    priority: "high",
+                    description: "Комплексный аудит информационной безопасности"
+                },
+                {
+                    name: "Оптимизация IT-инфраструктуры",
+                    organization: "Лукойл",
+                    service: "network",
+                    stage: "contract",
+                    status: "active",
+                    revenue: 2200000,
+                    expenses: 700000,
+                    priority: "medium",
+                    description: "Оптимизация сетевой инфраструктуры компании"
+                }
+            ];
+
+            users.forEach(user => {
+                projectTemplates.forEach((template, index) => {
+                    projects.push({
+                        id: `user_${user.id}_project_${index + 1}`,
+                        project_name: `${template.name} #${user.id}${index + 1}`,
+                        organization: template.organization,
+                        manager: user.name,
+                        service: template.service,
+                        stage: template.stage,
+                        status: template.status,
+                        revenue: template.revenue + (user.id * 100000),
+                        expenses: template.expenses + (user.id * 50000),
+                        priority: template.priority,
+                        description: template.description,
+                        created_at: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
+                        industry_solution: Math.random() > 0.5,
+                        forecast: Math.random() > 0.3
+                    });
+                });
+            });
+
+            return projects;
+        }
 
         function showErrorPage() {
             document.body.innerHTML = `
@@ -480,13 +618,107 @@
             `;
         }
 
-        function getRoleName(role) {
-            const roles = {
-                'admin': 'Администратор',
-                'analyst': 'Аналитик',
-                'user': 'Менеджер'
-            };
-            return roles[role] || role;
+        function displayActiveProjects() {
+            if (!currentUser) return;
+            
+            const container = document.getElementById('activeProjects');
+            const countElement = document.getElementById('activeProjectsCount');
+            
+            // Активные проекты - те, которые не завершены
+            const activeProjects = allProjects.filter(p => {
+                const isUserProject = p.manager === currentUser.full_name;
+                const isActive = p.status !== 'completed' && p.status !== 'cancelled';
+                console.log(`Проект: ${p.project_name}, Менеджер: ${p.manager}, Статус: ${p.status}, Активный: ${isActive}`);
+                return isUserProject && isActive;
+            });
+            
+            console.log('Активные проекты пользователя:', activeProjects.length);
+            
+            countElement.textContent = activeProjects.length;
+            
+            if (activeProjects.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i data-feather="clock" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p>Нет активных проектов в разработке</p>
+                        <p class="text-sm mt-2">Все проекты завершены или находятся на паузе</p>
+                    </div>
+                `;
+                feather.replace();
+                return;
+            }
+            
+            let html = '';
+            activeProjects.forEach(project => {
+                const profit = Number(project.revenue || 0) - Number(project.expenses || 0);
+                const progress = getStageProgress(project.stage);
+                const daysInWork = Math.floor(Math.random() * 60) + 5; // 5-65 дней в работе
+                
+                html += `
+                    <div class="project-card border-l-4 ${getStageBorderColor(project.stage)} p-4 bg-white rounded hover:shadow-lg transition-all duration-200">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-lg mb-1">${project.project_name || 'Без названия'}</h3>
+                                <p class="text-sm text-gray-600 mb-2">${project.organization || 'Клиент не указан'}</p>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span class="stage-badge ${getStageBadgeClass(project.stage)}">
+                                        ${getStageText(project.stage)}
+                                    </span>
+                                    <span class="stage-badge bg-gray-100 text-gray-700">
+                                        ${daysInWork} дней в работе
+                                    </span>
+                                    <span class="stage-badge ${getStatusBadgeClass(project.status)}">
+                                        ${getStatusText(project.status)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-lg font-bold text-purple-600">${formatCurrency(project.revenue || 0)}</div>
+                                <div class="text-sm text-gray-500">бюджет</div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-sm text-gray-700 mb-3 line-clamp-2">${project.description || 'Описание не добавлено'}</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
+                            <div>
+                                <span class="text-gray-500">Приоритет:</span>
+                                <div class="font-medium ${getPriorityClass(project.priority)}">${getPriorityText(project.priority)}</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Прогресс:</span>
+                                <div class="font-medium">${progress}%</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Следующий этап:</span>
+                                <div class="font-medium">${getNextStage(project.stage)}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1">
+                                <div class="skill-bar mb-1">
+                                    <div class="skill-progress" style="width: ${progress}%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>Начало</span>
+                                    <span>${progress}% выполнено</span>
+                                    <span>Завершение</span>
+                                </div>
+                            </div>
+                            <div class="ml-4 text-right">
+                                <div class="text-sm font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                    ${formatCurrency(profit)}
+                                </div>
+                                <div class="text-xs text-gray-500">прибыль</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            feather.replace();
         }
 
         function displayUserProjects() {
@@ -559,12 +791,87 @@
             feather.replace();
         }
 
+        function getRoleName(role) {
+            const roles = {
+                'admin': 'Администратор',
+                'analyst': 'Аналитик',
+                'user': 'Менеджер'
+            };
+            return roles[role] || role;
+        }
+
+        function getStageText(stage) {
+            const map = {
+                'new': 'Новый проект',
+                'analysis': 'Анализ требований',
+                'negotiation': 'Переговоры', 
+                'contract': 'Подписание договора',
+                'implementation': 'Реализация',
+                'testing': 'Тестирование',
+                'completion': 'Завершение'
+            };
+            return map[stage] || stage;
+        }
+
+        function getStageProgress(stage) {
+            const progressMap = {
+                'new': 10,
+                'analysis': 25,
+                'negotiation': 40,
+                'contract': 60,
+                'implementation': 75,
+                'testing': 90,
+                'completion': 100
+            };
+            return progressMap[stage] || 0;
+        }
+
+        function getNextStage(currentStage) {
+            const nextStages = {
+                'new': 'Анализ требований',
+                'analysis': 'Переговоры',
+                'negotiation': 'Подписание договора',
+                'contract': 'Реализация',
+                'implementation': 'Тестирование',
+                'testing': 'Завершение',
+                'completion': 'Проект завершен'
+            };
+            return nextStages[currentStage] || 'Планирование';
+        }
+
+        function getStageBorderColor(stage) {
+            const colors = {
+                'new': 'border-blue-500',
+                'analysis': 'border-purple-500',
+                'negotiation': 'border-yellow-500',
+                'contract': 'border-green-500',
+                'implementation': 'border-indigo-500',
+                'testing': 'border-orange-500',
+                'completion': 'border-gray-500'
+            };
+            return colors[stage] || 'border-gray-400';
+        }
+
+        function getStageBadgeClass(stage) {
+            const classes = {
+                'new': 'bg-blue-100 text-blue-800',
+                'analysis': 'bg-purple-100 text-purple-800',
+                'negotiation': 'bg-yellow-100 text-yellow-800',
+                'contract': 'bg-green-100 text-green-800',
+                'implementation': 'bg-indigo-100 text-indigo-800',
+                'testing': 'bg-orange-100 text-orange-800',
+                'completion': 'bg-gray-100 text-gray-800'
+            };
+            return classes[stage] || 'bg-gray-100 text-gray-800';
+        }
+
         function getStatusText(status) {
             const map = {
                 'new': 'Новый',
                 'active': 'Активен',
                 'in_progress': 'В работе',
-                'completed': 'Завершён'
+                'completed': 'Завершён',
+                'cancelled': 'Отменен'
             };
             return map[status] || status;
         }
@@ -574,9 +881,41 @@
                 'new': 'bg-purple-100 text-purple-800',
                 'active': 'bg-green-100 text-green-800',
                 'in_progress': 'bg-yellow-100 text-yellow-800',
-                'completed': 'bg-blue-100 text-blue-800'
+                'completed': 'bg-blue-100 text-blue-800',
+                'cancelled': 'bg-red-100 text-red-800'
             };
             return map[status] || '';
+        }
+
+        function getStatusBadgeClass(status) {
+            const map = {
+                'new': 'bg-blue-100 text-blue-800',
+                'active': 'bg-green-100 text-green-800',
+                'in_progress': 'bg-yellow-100 text-yellow-800',
+                'completed': 'bg-gray-100 text-gray-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+            return map[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getPriorityText(priority) {
+            const map = {
+                'low': 'Низкий',
+                'medium': 'Средний',
+                'high': 'Высокий',
+                'critical': 'Критический'
+            };
+            return map[priority] || 'Не указан';
+        }
+
+        function getPriorityClass(priority) {
+            const map = {
+                'low': 'text-green-600',
+                'medium': 'text-yellow-600',
+                'high': 'text-orange-600',
+                'critical': 'text-red-600'
+            };
+            return map[priority] || 'text-gray-600';
         }
 
         function formatCurrency(amount) {

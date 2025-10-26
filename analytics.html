@@ -14,6 +14,23 @@
     <script src="api.js"></script>
     <script src="components/navbar.js"></script>
     <script src="components/footer.js"></script>
+    <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Аналитика проектов</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/footer.js"></script>
+    
     <style>
         /* Компактные графики */
         .compact-chart {
@@ -28,6 +45,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid #e5e7eb;
             transition: all 0.2s ease;
+            position: relative;
         }
         
         .chart-container-small:hover {
@@ -83,6 +101,61 @@
         .metric-change-compact {
             font-size: 0.6rem;
             margin-top: 0.1rem;
+        }
+        
+        /* Легенда для графиков */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+            font-size: 0.65rem;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.1rem 0.3rem;
+            background: #f8f9fa;
+            border-radius: 3px;
+            border-left: 3px solid;
+        }
+        
+        .legend-color {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .legend-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+        }
+        
+        /* Подписи значений на графиках */
+        .chart-value-labels {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.6rem;
+            flex-wrap: wrap;
+        }
+        
+        .value-label {
+            background: rgba(255,255,255,0.9);
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
+            border: 1px solid #e5e7eb;
         }
     </style>
 </head>
@@ -218,6 +291,174 @@
             
             <!-- Первая строка графиков -->
             <div class="compact-grid mb-3">
+
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    main {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+    section {
+        background: #fff;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+        margin-bottom: 30px;
+    }
+    h2 {
+        margin-top: 0;
+        color: #0f172a;
+        font-size: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+    label {
+        font-weight: 600;
+        margin-right: 8px;
+    }
+    select, button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+    button {
+        background-color: #2563eb;
+        color: #fff;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    button:hover {
+        background-color: #1d4ed8;
+    }
+    #chartContainer {
+        margin-top: 30px;
+    }
+    canvas {
+        max-width: 100%;
+    }
+</style>
+
+<main>
+    <section>
+        <h2>Настройки графика</h2>
+        <div style="display:flex; flex-wrap: wrap; gap: 12px; align-items:center;">
+            <label for="chartType">Тип графика:</label>
+            <select id="chartType">
+                <option value="bar">Гистограмма</option>
+                <option value="line">Линейный</option>
+                <option value="pie">Круговой</option>
+                <option value="doughnut">Кольцевой</option>
+                <option value="polarArea">Полярная область</option>
+            </select>
+
+            <label for="xAxis">Ось X:</label>
+            <select id="xAxis">
+                <option value="Месяц">Месяц</option>
+                <option value="Категория">Категория</option>
+                <option value="Город">Город</option>
+            </select>
+
+            <label for="yAxis">Ось Y:</label>
+            <select id="yAxis">
+                <option value="Продажи">Продажи</option>
+                <option value="Доход">Доход</option>
+                <option value="Затраты">Затраты</option>
+            </select>
+
+            <button id="generateChart">Построить график</button>
+        </div>
+        <div id="chartContainer">
+            <canvas id="chart"></canvas>
+        </div>
+    </section>
+</main>
+
+<script>
+const ctx = document.getElementById('chart').getContext('2d');
+let chartInstance = null;
+
+const mockData = {
+    "Месяц": ["Янв", "Фев", "Мар", "Апр", "Май", "Июн"],
+    "Категория": ["Техника", "Одежда", "Продукты", "Игрушки", "Косметика", "Книги"],
+    "Город": ["Москва", "СПб", "Казань", "Екатеринбург", "Новосибирск", "Ростов"],
+    "Продажи": [120, 150, 180, 100, 90, 200],
+    "Доход": [400, 500, 650, 300, 280, 700],
+    "Затраты": [200, 250, 300, 180, 150, 400]
+};
+
+function generateRandomColorSet(count) {
+    return Array.from({length: count}, () =>
+        `hsl(${Math.floor(Math.random()*360)}, 70%, 60%)`
+    );
+}
+
+document.getElementById('generateChart').addEventListener('click', () => {
+    const type = document.getElementById('chartType').value;
+    const xKey = document.getElementById('xAxis').value;
+    const yKey = document.getElementById('yAxis').value;
+    const labels = mockData[xKey];
+    const data = mockData[yKey];
+    const colors = generateRandomColorSet(labels.length);
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: type,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: `${yKey} по ${xKey}`,
+                data: data,
+                backgroundColor: (type === 'line') ? '#2563eb' : colors,
+                borderColor: '#1e3a8a',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    labels: {
+                        font: { size: 14 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    titleColor: '#fff',
+                    bodyColor: '#fff'
+                }
+            },
+            scales: (type === 'pie' || type === 'doughnut' || type === 'polarArea') ? {} : {
+                x: {
+                    grid: { color: '#e2e8f0' },
+                    ticks: { color: '#334155' }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#e2e8f0' },
+                    ticks: { color: '#334155' }
+                }
+            }
+        }
+    });
+});
+
+// Создаём дефолтный график при загрузке
+window.onload = () => {
+    document.getElementById('generateChart').click();
+};
+</script>
+
                 <!-- Этапы -->
                 <div class="chart-container-small">
                     <div class="chart-header-small">
@@ -228,6 +469,7 @@
                         </select>
                     </div>
                     <canvas id="stageChart" class="compact-chart"></canvas>
+                    <div id="stageLegend" class="chart-legend"></div>
                 </div>
                 
                 <!-- Статусы -->
@@ -240,6 +482,7 @@
                         </select>
                     </div>
                     <canvas id="statusChart" class="compact-chart"></canvas>
+                    <div id="statusLegend" class="chart-legend"></div>
                 </div>
                 
                 <!-- Услуги -->
@@ -252,6 +495,7 @@
                         </select>
                     </div>
                     <canvas id="serviceChart" class="compact-chart"></canvas>
+                    <div id="serviceLegend" class="chart-legend"></div>
                 </div>
             </div>
 
@@ -267,6 +511,7 @@
                         </select>
                     </div>
                     <canvas id="managerChart" class="compact-chart"></canvas>
+                    <div id="managerLegend" class="chart-legend"></div>
                 </div>
                 
                 <!-- Финансы -->
@@ -279,6 +524,7 @@
                         </select>
                     </div>
                     <canvas id="financeChart" class="compact-chart"></canvas>
+                    <div id="financeLegend" class="chart-legend"></div>
                 </div>
                 
                 <!-- Сегменты -->
@@ -291,6 +537,7 @@
                         </select>
                     </div>
                     <canvas id="segmentChart" class="compact-chart"></canvas>
+                    <div id="segmentLegend" class="chart-legend"></div>
                 </div>
             </div>
 
@@ -322,7 +569,10 @@
         </div>
     </div>
 
+    
+
     <custom-footer></custom-footer>
+
 
     <script>
         let allProjects = [];
@@ -545,12 +795,69 @@
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    tooltip: {
+                        enabled: true
                     }
                 },
                 scales: chartConfig.options?.scales || {}
             };
             
+            // Добавляем подписи данных на графики
+            if (chartType === 'bar' || chartType === 'line') {
+                chartConfig.options.plugins.datalabels = {
+                    display: true,
+                    color: '#374151',
+                    font: {
+                        size: 8,
+                        weight: 'bold'
+                    },
+                    formatter: function(value) {
+                        if (value >= 1000) {
+                            return (value/1000).toFixed(0) + 'k';
+                        }
+                        return value;
+                    }
+                };
+            }
+            
             charts[chartName] = new Chart(ctx, chartConfig);
+            
+            // Обновляем легенду
+            updateChartLegend(chartName, chartConfig);
+        }
+
+        function updateChartLegend(chartName, chartConfig) {
+            const legendContainer = document.getElementById(chartName + 'Legend');
+            if (!legendContainer) return;
+            
+            const labels = chartConfig.data.labels;
+            const backgroundColor = chartConfig.data.datasets[0].backgroundColor;
+            
+            let legendHtml = '';
+            
+            if (Array.isArray(backgroundColor)) {
+                // Для pie/doughnut charts
+                labels.forEach((label, index) => {
+                    const color = Array.isArray(backgroundColor) ? backgroundColor[index] : backgroundColor;
+                    legendHtml += `
+                        <div class="legend-item" style="border-left-color: ${color}">
+                            <span class="legend-color" style="background-color: ${color}"></span>
+                            <span class="legend-text" title="${label}">${label}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                // Для bar/line charts с одним цветом
+                legendHtml = `
+                    <div class="legend-item" style="border-left-color: ${backgroundColor}">
+                        <span class="legend-color" style="background-color: ${backgroundColor}"></span>
+                        <span class="legend-text">${chartConfig.data.datasets[0].label || 'Данные'}</span>
+                    </div>
+                `;
+            }
+            
+            legendContainer.innerHTML = legendHtml;
         }
 
         function getStageChartConfig(projects, type) {
@@ -561,13 +868,15 @@
                 }
             });
             
+            const colors = ['#7400bc', '#ff4800', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+            
             return {
                 type: type,
                 data: {
                     labels: Object.keys(stageData).map(k => getStageText(k)),
                     datasets: [{
                         data: Object.values(stageData),
-                        backgroundColor: ['#7400bc', '#ff4800', '#3b82f6', '#10b981', '#f59e0b']
+                        backgroundColor: colors.slice(0, Object.keys(stageData).length)
                     }]
                 }
             };
@@ -586,16 +895,28 @@
                 data: {
                     labels: Object.keys(mgrData),
                     datasets: [{
-                        label: 'Выручка',
+                        label: 'Выручка (₽)',
                         data: Object.values(mgrData),
                         backgroundColor: type === 'bar' ? '#7400bc' : undefined,
-                        borderColor: type === 'line' ? '#7400bc' : undefined
+                        borderColor: type === 'line' ? '#7400bc' : undefined,
+                        fill: false
                     }]
                 },
                 options: {
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value/1000000).toFixed(1) + 'M';
+                                    }
+                                    if (value >= 1000) {
+                                        return (value/1000).toFixed(0) + 'k';
+                                    }
+                                    return value;
+                                }
+                            }
                         }
                     }
                 }
@@ -610,13 +931,15 @@
                 }
             });
             
+            const colors = ['#dcfce7', '#fef08a', '#e0f2fe', '#f3e8ff', '#fee2e2'];
+            
             return {
                 type: type,
                 data: {
                     labels: Object.keys(statusData).map(k => getStatusText(k)),
                     datasets: [{
                         data: Object.values(statusData),
-                        backgroundColor: ['#dcfce7', '#fef08a', '#e0f2fe', '#f3e8ff']
+                        backgroundColor: colors.slice(0, Object.keys(statusData).length)
                     }]
                 }
             };
@@ -627,6 +950,12 @@
             const totalExpenses = projects.reduce((sum, p) => sum + Number(p.expenses || 0), 0);
             const profit = totalRevenue - totalExpenses;
             
+            const colors = [
+                '#10b981', // Выручка - зеленый
+                '#f59e0b', // Затраты - оранжевый
+                profit >= 0 ? '#3b82f6' : '#ef4444' // Прибыль - синий/красный
+            ];
+            
             return {
                 type: type,
                 data: {
@@ -634,14 +963,26 @@
                     datasets: [{
                         label: 'Сумма (₽)',
                         data: [totalRevenue, totalExpenses, profit],
-                        backgroundColor: type === 'bar' ? ['#7400bc', '#ff4800', profit >= 0 ? '#10b981' : '#ef4444'] : undefined,
-                        borderColor: type === 'line' ? '#7400bc' : undefined
+                        backgroundColor: type === 'bar' ? colors : undefined,
+                        borderColor: type === 'line' ? '#7400bc' : undefined,
+                        fill: false
                     }]
                 },
                 options: {
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value/1000000).toFixed(1) + 'M';
+                                    }
+                                    if (value >= 1000) {
+                                        return (value/1000).toFixed(0) + 'k';
+                                    }
+                                    return value;
+                                }
+                            }
                         }
                     }
                 }
@@ -656,13 +997,15 @@
                 }
             });
             
+            const colors = ['#7400bc', '#ff4800', '#3b82f6', '#10b981', '#f59e0b'];
+            
             return {
                 type: type,
                 data: {
                     labels: Object.keys(serviceData).map(k => getServiceText(k)),
                     datasets: [{
                         data: Object.values(serviceData),
-                        backgroundColor: ['#7400bc', '#ff4800', '#3b82f6', '#10b981']
+                        backgroundColor: colors.slice(0, Object.keys(serviceData).length)
                     }]
                 }
             };
@@ -676,13 +1019,15 @@
                 }
             });
             
+            const colors = ['#7400bc', '#ff4800', '#3b82f6', '#10b981'];
+            
             return {
                 type: type,
                 data: {
                     labels: Object.keys(segmentData).map(k => getSegmentText(k)),
                     datasets: [{
                         data: Object.values(segmentData),
-                        backgroundColor: ['#7400bc', '#ff4800', '#3b82f6']
+                        backgroundColor: colors.slice(0, Object.keys(segmentData).length)
                     }]
                 }
             };

@@ -163,24 +163,7 @@
         addDemoDataButton();
     });
     
-    function addDemoDataButton() {
-        const header = document.querySelector('.flex.justify-between.items-center.mb-6');
-        if (header) {
-            const demoBtn = document.createElement('button');
-            demoBtn.className = 'bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-700 transition ml-4';
-            demoBtn.innerHTML = `
-                <i data-feather="refresh-cw"></i>
-                <span>Обновить демо-данные</span>
-            `;
-            demoBtn.onclick = function() {
-                if (confirm('Это удалит все текущие проекты и загрузит свежие демо-данные. Продолжить?')) {
-                    initDemoData();
-                }
-            };
-            header.appendChild(demoBtn);
-            feather.replace();
-        }
-    }
+  
     
     // Делаем функцию доступной глобально
     window.initDemoData = initDemoData;

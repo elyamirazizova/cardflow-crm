@@ -126,13 +126,8 @@ class CustomNavbar extends HTMLElement {
                 }
             </style>
             <nav>
-                <div class="logo">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L4 7V17L12 22L20 17V7L12 2Z" stroke="#7400bc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4 7L12 12L20 7" stroke="#7400bc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M12 12V22" stroke="#7400bc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <span>CardFlow</span>
+              <img src="Логотип_компании_«Ростелеком».png" alt="Описание" style="width: 100px;height: 50px;">
+                    
                 </div>
                 
                 <ul class="nav-links">
@@ -193,7 +188,6 @@ class CustomNavbar extends HTMLElement {
                 <li class="admin-divider">
                     <a href="#" class="admin-danger" id="resetDataBtn">
                         <i data-feather="trash-2"></i>
-                        <span>Сбросить все данные</span>
                     </a>
                 </li>
             `;
