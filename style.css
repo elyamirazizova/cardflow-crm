@@ -1,0 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #6B1D9F; /* РОСТЕЛЕКОМ фиолетовый */
+    --secondary: #FF6B35; /* РОСТЕЛЕКОМ оранжевый */
+    --white: #ffffff;
+    --black: #000000;
+    --dark-gray: #4b5563;
+    --light-gray: #e5e7eb;
+    --purple-light: #9B59D7; /* Светлый фиолетовый */
+    --orange-light: #FF8C5A; /* Светлый оранжевый */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--black);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-container {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 60px;
+}
+
+/* Улучшения для навигации */
+custom-navbar {
+    display: block;
+    width: 100%;
+}
+
+/* Убедимся, что навигация всегда видна */
+nav {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+}
+
+/* Layout improvements */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    min-height: 300px;
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Dashboard specific styles */
+.bg-purple-100 {
+    background-color: rgba(116, 0, 188, 0.1);
+}
+.bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+.bg-green-100 {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+.bg-orange-100 {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+.bg-red-100 {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.text-purple-600 {
+    color: var(--primary);
+}
+.text-blue-600 {
+    color: #3b82f6;
+}
+.text-green-600 {
+    color: #10b981;
+}
+.text-orange-600 {
+    color: #f59e0b;
+}
+.text-red-600 {
+    color: #ef4444;
+}
+
+/* Card flip animation */
+.card-container {
+    perspective: 1000px;
+}
+
+.card {
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
+}
+
+.card.is-flipped {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    padding: 16px;
+    box-sizing: border-box;
+    background: white;
+    border-radius: 8px;
+    /* Убираем overflow-y: auto */
+    overflow: hidden; /* Заменяем на hidden чтобы контент не выходил за границы */
+}
+
+.card-back {
+    transform: rotateY(180deg);
+}
+
+/* Custom colors РОСТЕЛЕКОМ */
+.bg-primary {
+    background-color: var(--primary); /* #6B1D9F */
+}
+
+.bg-secondary {
+    background-color: var(--secondary); /* #FF6B35 */
+}
+
+.text-primary {
+    color: var(--primary);
+}
+
+.text-secondary {
+    color: var(--secondary);
+}
+
+/* Hover effects */
+.hover\:bg-primary:hover {
+    background-color: var(--primary);
+}
+.hover\:bg-secondary:hover {
+    background-color: var(--secondary);
+}
+
+.border-primary {
+    border-color: #7400bc;
+}
+
+.border-secondary {
+    border-color: #ff4800;
+}
+
+/* Modal styles */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Table styles */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Улучшения для контейнера */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}

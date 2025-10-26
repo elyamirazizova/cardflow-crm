@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Аналитика проектов</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/footer.js"></script>
+    <style>
+        /* Компактные графики */
+        .compact-chart {
+            height: 180px !important;
+            min-height: 180px !important;
+        }
+        
+        .chart-container-small {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .chart-container-small:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .chart-header-small {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .chart-title-small {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #374151;
+            margin: 0;
+        }
+        
+        .chart-select-small {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+        }
+        
+        /* Компактная сетка */
+        .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Маленькие метрики */
+        .metric-compact {
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        .metric-value-compact {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.1rem;
+        }
+        
+        .metric-label-compact {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
+        
+        .metric-change-compact {
+            font-size: 0.6rem;
+            margin-top: 0.1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <custom-navbar></custom-navbar>
+
+    <div class="flex">
+        <!-- Sidebar with filters -->
+        <div class="w-64 bg-white border-r border-gray-200 p-3 overflow-y-auto" style="max-height: 100vh;">
+            <h2 class="text-base font-semibold mb-3">Фильтры</h2>
+            
+            <button id="applyFilters" class="w-full bg-purple-600 text-white py-1.5 px-3 rounded text-sm hover:bg-opacity-90 transition mb-2">
+                Применить фильтры
+            </button>
+
+            <button id="resetFilters" class="w-full bg-gray-500 text-white py-1.5 px-3 rounded text-sm hover:bg-opacity-90 transition mb-4">
+                Сбросить все
+            </button>
+
+            <!-- Даты -->
+            <div class="mb-4">
+                <h3 class="text-xs font-medium text-gray-500 mb-1">Период</h3>
+                <div class="space-y-1">
+                    <div>
+                        <label class="block text-xs mb-0.5">С</label>
+                        <input type="date" id="startDate" class="w-full p-1 border border-gray-300 rounded text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs mb-0.5">По</label>
+                        <input type="date" id="endDate" class="w-full p-1 border border-gray-300 rounded text-xs">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Менеджеры -->
+            <div class="mb-4">
+                <h3 class="text-xs font-medium text-gray-500 mb-1">Менеджеры</h3>
+                <div class="space-y-1 max-h-20 overflow-y-auto text-xs" id="managersFilter">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="selectAllManagers" class="mr-1" checked>
+                        <label for="selectAllManagers" class="font-medium">Выбрать всех</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Статусы -->
+            <div class="mb-4">
+                <h3 class="text-xs font-medium text-gray-500 mb-1">Статусы</h3>
+                <div class="space-y-1 text-xs" id="statusesFilter">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="selectAllStatuses" class="mr-1" checked>
+                        <label for="selectAllStatuses" class="font-medium">Выбрать все</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Этапы -->
+            <div class="mb-4">
+                <h3 class="text-xs font-medium text-gray-500 mb-1">Этапы</h3>
+                <div class="space-y-1 text-xs" id="stagesFilter">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="selectAllStages" class="mr-1" checked>
+                        <label for="selectAllStages" class="font-medium">Выбрать все</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Услуги -->
+            <div class="mb-4">
+                <h3 class="text-xs font-medium text-gray-500 mb-1">Услуги</h3>
+                <div class="space-y-1 text-xs" id="servicesFilter">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="selectAllServices" class="mr-1" checked>
+                        <label for="selectAllServices" class="font-medium">Выбрать все</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Дополнительные фильтры -->
+            <div class="mb-4">
+                <h3 class="text-xs font-medium text-gray-500 mb-1">Дополнительно</h3>
+                <div class="space-y-1 text-xs">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="industrySolution" class="mr-1">
+                        <label for="industrySolution">Отраслевые</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="inForecast" class="mr-1">
+                        <label for="inForecast">В прогнозе</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 p-4">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-xl font-bold">Аналитика проектов</h1>
+                    <p class="text-xs text-gray-600 mt-0.5">Реальные данные в реальном времени</p>
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="exportToPDF()" class="bg-white text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 hover:bg-gray-50 transition border border-gray-300">
+                        <i data-feather="file-text" class="w-3 h-3"></i>
+                        PDF
+                    </button>
+                    <button onclick="exportToExcel()" class="bg-white text-gray-700 px-3 py-1 rounded text-sm flex items-center gap-1 hover:bg-gray-50 transition border border-gray-300">
+                        <i data-feather="file" class="w-3 h-3"></i>
+                        Excel
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Ключевые метрики -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                <div class="metric-compact bg-white rounded shadow border">
+                    <div class="metric-value-compact text-purple-600" id="totalProjects">0</div>
+                    <div class="metric-label-compact">Проектов</div>
+                </div>
+                <div class="metric-compact bg-white rounded shadow border">
+                    <div class="metric-value-compact text-green-600" id="totalRevenue">0 ₽</div>
+                    <div class="metric-label-compact">Выручка</div>
+                </div>
+                <div class="metric-compact bg-white rounded shadow border">
+                    <div class="metric-value-compact text-orange-600" id="totalExpenses">0 ₽</div>
+                    <div class="metric-label-compact">Затраты</div>
+                </div>
+                <div class="metric-compact bg-white rounded shadow border">
+                    <div class="metric-value-compact text-blue-600" id="totalProfit">0 ₽</div>
+                    <div class="metric-label-compact">Прибыль</div>
+                </div>
+            </div>
+            
+            <!-- Первая строка графиков -->
+            <div class="compact-grid mb-3">
+                <!-- Этапы -->
+                <div class="chart-container-small">
+                    <div class="chart-header-small">
+                        <h3 class="chart-title-small">Этапы</h3>
+                        <select class="chart-select-small" data-chart="stage">
+                            <option value="pie">Круг</option>
+                            <option value="doughnut">Кольцо</option>
+                        </select>
+                    </div>
+                    <canvas id="stageChart" class="compact-chart"></canvas>
+                </div>
+                
+                <!-- Статусы -->
+                <div class="chart-container-small">
+                    <div class="chart-header-small">
+                        <h3 class="chart-title-small">Статусы</h3>
+                        <select class="chart-select-small" data-chart="status">
+                            <option value="doughnut">Кольцо</option>
+                            <option value="pie">Круг</option>
+                        </select>
+                    </div>
+                    <canvas id="statusChart" class="compact-chart"></canvas>
+                </div>
+                
+                <!-- Услуги -->
+                <div class="chart-container-small">
+                    <div class="chart-header-small">
+                        <h3 class="chart-title-small">Услуги</h3>
+                        <select class="chart-select-small" data-chart="service">
+                            <option value="pie">Круг</option>
+                            <option value="bar">Столбцы</option>
+                        </select>
+                    </div>
+                    <canvas id="serviceChart" class="compact-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Вторая строка графиков -->
+            <div class="compact-grid mb-3">
+                <!-- Менеджеры -->
+                <div class="chart-container-small">
+                    <div class="chart-header-small">
+                        <h3 class="chart-title-small">Менеджеры</h3>
+                        <select class="chart-select-small" data-chart="manager">
+                            <option value="bar">Столбцы</option>
+                            <option value="line">Линия</option>
+                        </select>
+                    </div>
+                    <canvas id="managerChart" class="compact-chart"></canvas>
+                </div>
+                
+                <!-- Финансы -->
+                <div class="chart-container-small">
+                    <div class="chart-header-small">
+                        <h3 class="chart-title-small">Финансы</h3>
+                        <select class="chart-select-small" data-chart="finance">
+                            <option value="bar">Столбцы</option>
+                            <option value="line">Линия</option>
+                        </select>
+                    </div>
+                    <canvas id="financeChart" class="compact-chart"></canvas>
+                </div>
+                
+                <!-- Сегменты -->
+                <div class="chart-container-small">
+                    <div class="chart-header-small">
+                        <h3 class="chart-title-small">Сегменты</h3>
+                        <select class="chart-select-small" data-chart="segment">
+                            <option value="pie">Круг</option>
+                            <option value="bar">Столбцы</option>
+                        </select>
+                    </div>
+                    <canvas id="segmentChart" class="compact-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Таблица аналитики -->
+            <div class="bg-white p-3 rounded shadow">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-sm font-semibold">Аналитика по менеджерам</h2>
+                    <button onclick="exportTableToExcel()" class="bg-gray-600 text-white px-2 py-0.5 rounded text-xs flex items-center gap-0.5">
+                        <i data-feather="download" class="w-3 h-3"></i>
+                        Excel
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Менеджер</th>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Проектов</th>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Выручка</th>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Прибыль</th>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500">Рентабельность</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="analyticsTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+
+    <script>
+        let allProjects = [];
+        let currentFilteredProjects = [];
+        let charts = {};
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initPage();
+            setupEventListeners();
+            feather.replace();
+        });
+
+        async function initPage() {
+            try {
+                // Сначала пробуем API, потом localStorage
+                try {
+                    allProjects = await api.getProjects();
+                } catch (error) {
+                    console.log('API недоступен, загружаем из localStorage');
+                    allProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+                }
+                
+                currentFilteredProjects = [...allProjects];
+                console.log('Загружено проектов:', allProjects.length);
+                
+                initFilters();
+                renderAllCharts();
+                updateMetrics();
+                updateAnalyticsTable();
+            } catch (error) {
+                console.error('Error:', error);
+                // Показываем сообщение об ошибке
+                document.querySelector('.flex-1').innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded p-4 text-center">
+                        <i data-feather="alert-triangle" class="w-8 h-8 text-red-600 mx-auto mb-2"></i>
+                        <h3 class="text-red-800 font-medium">Ошибка загрузки данных</h3>
+                        <p class="text-red-600 text-sm">${error.message}</p>
+                        <button onclick="location.reload()" class="mt-2 bg-red-600 text-white px-3 py-1 rounded text-sm">
+                            Перезагрузить
+                        </button>
+                    </div>
+                `;
+                feather.replace();
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            
+            document.querySelectorAll('.chart-select-small').forEach(select => {
+                select.addEventListener('change', function() {
+                    const chartName = this.getAttribute('data-chart');
+                    renderChart(chartName, currentFilteredProjects);
+                });
+            });
+
+            setupSelectAll('Managers');
+            setupSelectAll('Statuses');
+            setupSelectAll('Stages');
+            setupSelectAll('Services');
+        }
+
+        function setupSelectAll(type) {
+            const selectAll = document.getElementById(`selectAll${type}`);
+            const container = document.getElementById(`${type.toLowerCase()}Filter`);
+            
+            selectAll.addEventListener('change', function() {
+                const checkboxes = container.querySelectorAll('input[type="checkbox"]:not(#selectAll' + type + ')');
+                checkboxes.forEach(cb => cb.checked = this.checked);
+            });
+        }
+
+        function initFilters() {
+            // Managers
+            const managers = [...new Set(allProjects.map(p => p.manager))].filter(m => m);
+            const managersHtml = managers.map(m => `
+                <div class="flex items-center">
+                    <input type="checkbox" id="mgr_${m}" value="${m}" class="mr-1" checked>
+                    <label for="mgr_${m}">${m}</label>
+                </div>
+            `).join('');
+            document.getElementById('managersFilter').innerHTML += managersHtml;
+            
+            // Statuses
+            const statuses = [...new Set(allProjects.map(p => p.status))].filter(s => s);
+            const statusesHtml = statuses.map(s => `
+                <div class="flex items-center">
+                    <input type="checkbox" id="sts_${s}" value="${s}" class="mr-1" checked>
+                    <label for="sts_${s}">${getStatusText(s)}</label>
+                </div>
+            `).join('');
+            document.getElementById('statusesFilter').innerHTML += statusesHtml;
+
+            // Stages
+            const stages = [...new Set(allProjects.map(p => p.stage))].filter(st => st);
+            const stagesHtml = stages.map(st => `
+                <div class="flex items-center">
+                    <input type="checkbox" id="stg_${st}" value="${st}" class="mr-1" checked>
+                    <label for="stg_${st}">${getStageText(st)}</label>
+                </div>
+            `).join('');
+            document.getElementById('stagesFilter').innerHTML += stagesHtml;
+
+            // Services
+            const services = [...new Set(allProjects.map(p => p.service))].filter(s => s);
+            const servicesHtml = services.map(s => `
+                <div class="flex items-center">
+                    <input type="checkbox" id="srv_${s}" value="${s}" class="mr-1" checked>
+                    <label for="srv_${s}">${getServiceText(s)}</label>
+                </div>
+            `).join('');
+            document.getElementById('servicesFilter').innerHTML += servicesHtml;
+        }
+
+        function applyFilters() {
+            let filtered = [...allProjects];
+            
+            // Фильтр по менеджерам
+            const selectedManagers = getSelectedValues('managersFilter');
+            if (selectedManagers.length > 0) {
+                filtered = filtered.filter(project => selectedManagers.includes(project.manager));
+            }
+            
+            // Фильтр по статусам
+            const selectedStatuses = getSelectedValues('statusesFilter');
+            if (selectedStatuses.length > 0) {
+                filtered = filtered.filter(project => selectedStatuses.includes(project.status));
+            }
+            
+            // Фильтр по этапам
+            const selectedStages = getSelectedValues('stagesFilter');
+            if (selectedStages.length > 0) {
+                filtered = filtered.filter(project => selectedStages.includes(project.stage));
+            }
+            
+            // Фильтр по услугам
+            const selectedServices = getSelectedValues('servicesFilter');
+            if (selectedServices.length > 0) {
+                filtered = filtered.filter(project => selectedServices.includes(project.service));
+            }
+            
+            // Дополнительные фильтры
+            const industryOnly = document.getElementById('industrySolution').checked;
+            if (industryOnly) {
+                filtered = filtered.filter(project => project.industry_solution);
+            }
+            
+            const forecastOnly = document.getElementById('inForecast').checked;
+            if (forecastOnly) {
+                filtered = filtered.filter(project => project.forecast);
+            }
+            
+            currentFilteredProjects = filtered;
+            renderAllCharts();
+            updateMetrics();
+            updateAnalyticsTable();
+        }
+
+        function resetFilters() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+            document.querySelectorAll('input[type="date"]').forEach(input => input.value = '');
+            document.querySelectorAll('.chart-select-small').forEach(select => {
+                select.selectedIndex = 0;
+            });
+            applyFilters();
+        }
+
+        function getSelectedValues(containerId) {
+            return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked:not(#selectAll)`))
+                       .map(cb => cb.value);
+        }
+
+        function renderAllCharts() {
+            renderChart('stage', currentFilteredProjects);
+            renderChart('manager', currentFilteredProjects);
+            renderChart('status', currentFilteredProjects);
+            renderChart('finance', currentFilteredProjects);
+            renderChart('service', currentFilteredProjects);
+            renderChart('segment', currentFilteredProjects);
+        }
+
+        function renderChart(chartName, projects) {
+            const ctx = document.getElementById(chartName + 'Chart');
+            if (!ctx) return;
+            
+            const chartType = document.querySelector(`[data-chart="${chartName}"]`).value;
+            
+            if (charts[chartName]) {
+                charts[chartName].destroy();
+            }
+            
+            let chartConfig;
+            
+            switch(chartName) {
+                case 'stage':
+                    chartConfig = getStageChartConfig(projects, chartType);
+                    break;
+                case 'manager':
+                    chartConfig = getManagerChartConfig(projects, chartType);
+                    break;
+                case 'status':
+                    chartConfig = getStatusChartConfig(projects, chartType);
+                    break;
+                case 'finance':
+                    chartConfig = getFinanceChartConfig(projects, chartType);
+                    break;
+                case 'service':
+                    chartConfig = getServiceChartConfig(projects, chartType);
+                    break;
+                case 'segment':
+                    chartConfig = getSegmentChartConfig(projects, chartType);
+                    break;
+            }
+            
+            // Упрощенные настройки для маленьких графиков
+            chartConfig.options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: chartConfig.options?.scales || {}
+            };
+            
+            charts[chartName] = new Chart(ctx, chartConfig);
+        }
+
+        function getStageChartConfig(projects, type) {
+            const stageData = {};
+            projects.forEach(p => {
+                if (p.stage) {
+                    stageData[p.stage] = (stageData[p.stage] || 0) + 1;
+                }
+            });
+            
+            return {
+                type: type,
+                data: {
+                    labels: Object.keys(stageData).map(k => getStageText(k)),
+                    datasets: [{
+                        data: Object.values(stageData),
+                        backgroundColor: ['#7400bc', '#ff4800', '#3b82f6', '#10b981', '#f59e0b']
+                    }]
+                }
+            };
+        }
+
+        function getManagerChartConfig(projects, type) {
+            const mgrData = {};
+            projects.forEach(p => {
+                if (p.manager) {
+                    mgrData[p.manager] = (mgrData[p.manager] || 0) + Number(p.revenue || 0);
+                }
+            });
+            
+            return {
+                type: type,
+                data: {
+                    labels: Object.keys(mgrData),
+                    datasets: [{
+                        label: 'Выручка',
+                        data: Object.values(mgrData),
+                        backgroundColor: type === 'bar' ? '#7400bc' : undefined,
+                        borderColor: type === 'line' ? '#7400bc' : undefined
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+        }
+
+        function getStatusChartConfig(projects, type) {
+            const statusData = {};
+            projects.forEach(p => {
+                if (p.status) {
+                    statusData[p.status] = (statusData[p.status] || 0) + 1;
+                }
+            });
+            
+            return {
+                type: type,
+                data: {
+                    labels: Object.keys(statusData).map(k => getStatusText(k)),
+                    datasets: [{
+                        data: Object.values(statusData),
+                        backgroundColor: ['#dcfce7', '#fef08a', '#e0f2fe', '#f3e8ff']
+                    }]
+                }
+            };
+        }
+
+        function getFinanceChartConfig(projects, type) {
+            const totalRevenue = projects.reduce((sum, p) => sum + Number(p.revenue || 0), 0);
+            const totalExpenses = projects.reduce((sum, p) => sum + Number(p.expenses || 0), 0);
+            const profit = totalRevenue - totalExpenses;
+            
+            return {
+                type: type,
+                data: {
+                    labels: ['Выручка', 'Затраты', 'Прибыль'],
+                    datasets: [{
+                        label: 'Сумма (₽)',
+                        data: [totalRevenue, totalExpenses, profit],
+                        backgroundColor: type === 'bar' ? ['#7400bc', '#ff4800', profit >= 0 ? '#10b981' : '#ef4444'] : undefined,
+                        borderColor: type === 'line' ? '#7400bc' : undefined
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+        }
+
+        function getServiceChartConfig(projects, type) {
+            const serviceData = {};
+            projects.forEach(p => {
+                if (p.service) {
+                    serviceData[p.service] = (serviceData[p.service] || 0) + Number(p.revenue || 0);
+                }
+            });
+            
+            return {
+                type: type,
+                data: {
+                    labels: Object.keys(serviceData).map(k => getServiceText(k)),
+                    datasets: [{
+                        data: Object.values(serviceData),
+                        backgroundColor: ['#7400bc', '#ff4800', '#3b82f6', '#10b981']
+                    }]
+                }
+            };
+        }
+
+        function getSegmentChartConfig(projects, type) {
+            const segmentData = {};
+            projects.forEach(p => {
+                if (p.business_segment) {
+                    segmentData[p.business_segment] = (segmentData[p.business_segment] || 0) + 1;
+                }
+            });
+            
+            return {
+                type: type,
+                data: {
+                    labels: Object.keys(segmentData).map(k => getSegmentText(k)),
+                    datasets: [{
+                        data: Object.values(segmentData),
+                        backgroundColor: ['#7400bc', '#ff4800', '#3b82f6']
+                    }]
+                }
+            };
+        }
+
+        function updateMetrics() {
+            const totalProjects = currentFilteredProjects.length;
+            const totalRevenue = currentFilteredProjects.reduce((sum, p) => sum + Number(p.revenue || 0), 0);
+            const totalExpenses = currentFilteredProjects.reduce((sum, p) => sum + Number(p.expenses || 0), 0);
+            const totalProfit = totalRevenue - totalExpenses;
+
+            document.getElementById('totalProjects').textContent = totalProjects;
+            document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('totalProfit').textContent = formatCurrency(totalProfit);
+        }
+
+        function updateAnalyticsTable() {
+            const tbody = document.getElementById('analyticsTable');
+            
+            const managerStats = {};
+            currentFilteredProjects.forEach(p => {
+                if (!p.manager) return;
+                
+                if (!managerStats[p.manager]) {
+                    managerStats[p.manager] = {
+                        projects: 0,
+                        revenue: 0,
+                        profit: 0
+                    };
+                }
+                
+                managerStats[p.manager].projects++;
+                managerStats[p.manager].revenue += Number(p.revenue || 0);
+                managerStats[p.manager].profit += (Number(p.revenue || 0) - Number(p.expenses || 0));
+            });
+
+            let html = '';
+            Object.entries(managerStats).forEach(([manager, stats]) => {
+                const profitability = stats.revenue > 0 ? (stats.profit / stats.revenue * 100) : 0;
+                
+                html += `
+                    <tr>
+                        <td class="px-2 py-1 whitespace-nowrap font-medium">${manager}</td>
+                        <td class="px-2 py-1 whitespace-nowrap">${stats.projects}</td>
+                        <td class="px-2 py-1 whitespace-nowrap">${formatCurrency(stats.revenue)}</td>
+                        <td class="px-2 py-1 whitespace-nowrap ${stats.profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${formatCurrency(stats.profit)}
+                        </td>
+                        <td class="px-2 py-1 whitespace-nowrap ${profitability >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${profitability.toFixed(1)}%
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html || '<tr><td colspan="5" class="px-2 py-1 text-center text-gray-500">Нет данных</td></tr>';
+        }
+
+        // Экспорт функций
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(14);
+            doc.text('Аналитический отчёт CardFlow', 10, 10);
+            doc.setFontSize(10);
+            doc.text(`Сгенерировано: ${new Date().toLocaleString('ru-RU')}`, 10, 20);
+            doc.text(`Проектов: ${currentFilteredProjects.length} из ${allProjects.length}`, 10, 30);
+            
+            doc.setFontSize(12);
+            doc.text('Ключевые метрики:', 10, 50);
+            doc.text(`• Проектов: ${document.getElementById('totalProjects').textContent}`, 10, 60);
+            doc.text(`• Выручка: ${document.getElementById('totalRevenue').textContent}`, 10, 70);
+            doc.text(`• Затраты: ${document.getElementById('totalExpenses').textContent}`, 10, 80);
+            doc.text(`• Прибыль: ${document.getElementById('totalProfit').textContent}`, 10, 90);
+            
+            doc.save('cardflow_analytics.pdf');
+        }
+
+        function exportToExcel() {
+            const data = currentFilteredProjects.map(p => ({
+                'Название': p.project_name,
+                'Менеджер': p.manager,
+                'Клиент': p.organization,
+                'Услуга': getServiceText(p.service),
+                'Этап': getStageText(p.stage),
+                'Статус': getStatusText(p.status),
+                'Выручка': p.revenue || 0,
+                'Затраты': p.expenses || 0,
+                'Прибыль': Number(p.revenue || 0) - Number(p.expenses || 0)
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Проекты");
+            XLSX.writeFile(wb, "cardflow_analytics.xlsx");
+        }
+
+        function exportTableToExcel() {
+            const table = document.getElementById('analyticsTable');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const data = rows.map(row => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                return cells.map(cell => cell.textContent);
+            }).filter(row => row.length > 0);
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['Менеджер', 'Проектов', 'Выручка', 'Прибыль', 'Рентабельность'],
+                ...data
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, "Аналитика по менеджерам");
+            XLSX.writeFile(wb, "cardflow_managers.xlsx");
+        }
+
+        // Вспомогательные функции
+        function getStatusText(status) {
+            const map = {
+                'new': 'Новый',
+                'active': 'Активен', 
+                'in_progress': 'В работе',
+                'completed': 'Завершён'
+            };
+            return map[status] || status;
+        }
+
+        function getStageText(stage) {
+            const map = {
+                'new': 'Новый',
+                'analysis': 'Анализ',
+                'negotiation': 'Переговоры', 
+                'contract': 'Договор',
+                'implementation': 'Реализация',
+                'completion': 'Завершение'
+            };
+            return map[stage] || stage;
+        }
+
+        function getServiceText(service) {
+            const map = {
+                'cloud': 'Облачные решения',
+                'network': 'Сетевые решения',
+                'security': 'Безопасность',
+                'consulting': 'Консалтинг',
+                'support': 'Техподдержка'
+            };
+            return map[service] || service;
+        }
+
+        function getSegmentText(segment) {
+            const map = {
+                'sme': 'Малый бизнес',
+                'corporate': 'Корпоративный',
+                'government': 'Госсектор'
+            };
+            return map[segment] || segment;
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ru-RU', { 
+                style: 'currency', 
+                currency: 'RUB',
+                minimumFractionDigits: 0 
+            }).format(amount);
+        }
+    </script>
+</body>
+</html>

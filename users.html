@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Карточки</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/cardModal.js"></script>
+    <script src="components/footer.js"></script>
+</head>
+<body class="bg-white">
+        <custom-navbar></custom-navbar>
+    <style>
+        .user-role-admin { background-color: rgba(116, 0, 188, 0.1); color: #7400bc; }
+        .user-role-analyst { background-color: rgba(255, 72, 0, 0.1); color: #ff4800; }
+        .user-role-user { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        
+        .stats-card { transition: all 0.3s ease; }
+        .stats-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success { background-color: #10b981; }
+        .notification.error { background-color: #ef4444; }
+    </style>
+</head>
+
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Заголовок и кнопка добавления -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Управление пользователями</h1>
+                <p class="text-gray-600 mt-2">Администрирование сотрудников и их ролей</p>
+            </div>
+            <button id="addUserBtn" class="bg-purple-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-purple-700 transition">
+                <i data-feather="user-plus"></i>
+                <span>Добавить пользователя</span>
+            </button>
+        </div>
+
+        <!-- Статистика -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="stats-card bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Всего пользователей</p>
+                        <h3 class="text-2xl font-bold text-purple-600" id="totalUsers">0</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i data-feather="users" class="text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-card bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Администраторы</p>
+                        <h3 class="text-2xl font-bold text-purple-600" id="adminUsers">0</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i data-feather="shield" class="text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-card bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Аналитики</p>
+                        <h3 class="text-2xl font-bold text-orange-600" id="analystUsers">0</h3>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-lg">
+                        <i data-feather="bar-chart-2" class="text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-card bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Менеджеры</p>
+                        <h3 class="text-2xl font-bold text-blue-600" id="managerUsers">0</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i data-feather="briefcase" class="text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Фильтры и поиск -->
+        <div class="bg-white rounded-xl shadow p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex gap-4 flex-1">
+                    <div class="relative flex-1">
+                        <i data-feather="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                        <input type="text" id="searchUsers" placeholder="Поиск по имени или email..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                    <select id="roleFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        <option value="">Все роли</option>
+                        <option value="admin">Администраторы</option>
+                        <option value="analyst">Аналитики</option>
+                        <option value="user">Менеджеры</option>
+                    </select>
+                </div>
+                <button id="exportUsers" class="bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-700 transition">
+                    <i data-feather="download"></i>
+                    <span>Экспорт</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Таблица пользователей -->
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Пользователь</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Должность</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Роль</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Проектов</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="usersTable">
+                        <!-- Данные загружаются через JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Пагинация -->
+        <div class="flex justify-between items-center mt-6">
+            <div class="text-sm text-gray-500">
+                Показано <span id="showingCount">0</span> из <span id="totalCount">0</span> пользователей
+            </div>
+            <div class="flex gap-2">
+                <button id="prevPage" class="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50">Назад</button>
+                <div id="pageNumbers" class="flex gap-1"></div>
+                <button id="nextPage" class="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50">Вперед</button>
+            </div>
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+
+    <!-- Модальное окно добавления/редактирования пользователя -->
+    <div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-xl font-semibold" id="modalTitle">Добавить пользователя</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <form id="userForm" class="p-6 space-y-4">
+                <input type="hidden" id="userId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Имя и фамилия *</label>
+                        <input type="text" id="fullName" required class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" id="email" required class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+                        <input type="tel" id="phone" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Должность</label>
+                        <input type="text" id="position" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Роль *</label>
+                        <select id="role" required class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                            <option value="user">Менеджер</option>
+                            <option value="analyst">Аналитик</option>
+                            <option value="admin">Администратор</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Статус</label>
+                        <select id="status" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600">
+                            <option value="active">Активен</option>
+                            <option value="inactive">Неактивен</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Достижения</label>
+                    <textarea id="achievements" rows="3" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600" placeholder="Опишите достижения сотрудника..."></textarea>
+                </div>
+            </form>
+            <div class="flex justify-end gap-3 p-6 border-t border-gray-200 sticky bottom-0 bg-white">
+                <button id="cancelModal" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Отмена</button>
+                <button type="submit" form="userForm" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let allUsers = [];
+        let currentUsers = [];
+        let currentPage = 1;
+        const usersPerPage = 10;
+        let nextUserId = 24;
+
+        // Демо-данные пользователей
+        const demoUsers = [
+            // Администраторы
+            {
+                id: 1,
+                full_name: "Иванов Иван Иванович",
+                email: "ivanov@cardflow.ru",
+                phone: "+7 (999) 123-45-67",
+                position: "Руководитель отдела продаж",
+                role: "admin",
+                status: "active",
+                achievements: "Лучший менеджер 2023 года. Увеличил выручку на 45%",
+                projects_count: 12,
+                created_at: "2023-01-15"
+            },
+            {
+                id: 2,
+                full_name: "Кузнецова Мария Владимировна",
+                email: "kuznetsova@cardflow.ru",
+                phone: "+7 (999) 456-78-90",
+                position: "Администратор системы",
+                role: "admin", 
+                status: "active",
+                achievements: "Внедрила систему контроля качества",
+                projects_count: 3,
+                created_at: "2023-04-05"
+            },
+
+            // Аналитики
+            {
+                id: 3,
+                full_name: "Петрова Анна Сергеевна",
+                email: "petrova@cardflow.ru", 
+                phone: "+7 (999) 234-56-78",
+                position: "Старший аналитик",
+                role: "analyst",
+                status: "active",
+                achievements: "Разработала новую систему отчетности. Автор 5 успешных дашбордов",
+                projects_count: 8,
+                created_at: "2023-03-20"
+            },
+            {
+                id: 4,
+                full_name: "Васильев Дмитрий Олегович",
+                email: "vasilev@cardflow.ru",
+                phone: "+7 (999) 567-89-01",
+                position: "Бизнес-аналитик",
+                role: "analyst",
+                status: "inactive",
+                achievements: "Оптимизировал процессы отчетности",
+                projects_count: 6,
+                created_at: "2023-05-12"
+            },
+
+            // Менеджеры из основного списка
+            {
+                id: 5,
+                full_name: "Смирнов Алексей Петрович",
+                email: "smirnov@cardflow.ru",
+                phone: "+7 (999) 345-67-89",
+                position: "Менеджер проектов",
+                role: "user",
+                status: "active",
+                achievements: "Завершил 10 проектов с превышением KPI",
+                projects_count: 10,
+                created_at: "2023-02-10"
+            },
+            {
+                id: 6,
+                full_name: "Попов Сергей Николаевич",
+                email: "popov@cardflow.ru",
+                phone: "+7 (999) 678-90-12",
+                position: "Менеджер по развитию",
+                role: "user",
+                status: "active",
+                achievements: "Привлек 5 новых ключевых клиентов",
+                projects_count: 7,
+                created_at: "2023-06-18"
+            },
+            {
+                id: 7,
+                full_name: "Васильев Андрей Викторович",
+                email: "vasilev.a@cardflow.ru",
+                phone: "+7 (999) 789-01-23",
+                position: "Старший менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Руководитель команды из 5 менеджеров",
+                projects_count: 15,
+                created_at: "2023-01-22"
+            },
+            {
+                id: 8,
+                full_name: "Петров Дмитрий Сергеевич",
+                email: "petrov.d@cardflow.ru",
+                phone: "+7 (999) 890-12-34",
+                position: "Менеджер проектов",
+                role: "user",
+                status: "active",
+                achievements: "Специалист по корпоративным клиентам",
+                projects_count: 9,
+                created_at: "2023-03-15"
+            },
+            {
+                id: 9,
+                full_name: "Соколов Михаил Андреевич",
+                email: "sokolov@cardflow.ru",
+                phone: "+7 (999) 901-23-45",
+                position: "Менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Лучшие показатели по удержанию клиентов",
+                projects_count: 11,
+                created_at: "2023-04-30"
+            },
+            {
+                id: 10,
+                full_name: "Михайлов Павел Олегович",
+                email: "mikhailov@cardflow.ru",
+                phone: "+7 (999) 012-34-56",
+                position: "Менеджер по работе с партнерами",
+                role: "user",
+                status: "active",
+                achievements: "Заключил 3 стратегических партнерства",
+                projects_count: 6,
+                created_at: "2023-05-25"
+            },
+            {
+                id: 11,
+                full_name: "Новиков Игорь Васильевич",
+                email: "novikov@cardflow.ru",
+                phone: "+7 (999) 123-45-67",
+                position: "Менеджер проектов",
+                role: "user",
+                status: "active",
+                achievements: "Эксперт в облачных решениях",
+                projects_count: 8,
+                created_at: "2023-02-14"
+            },
+            {
+                id: 12,
+                full_name: "Федоров Артем Игоревич",
+                email: "fedorov@cardflow.ru",
+                phone: "+7 (999) 234-56-78",
+                position: "Менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Специалист по госсектору",
+                projects_count: 5,
+                created_at: "2023-07-10"
+            },
+            {
+                id: 13,
+                full_name: "Морозов Евгений Петрович",
+                email: "morozov@cardflow.ru",
+                phone: "+7 (999) 345-67-89",
+                position: "Менеджер по безопасности",
+                role: "user",
+                status: "active",
+                achievements: "Внедрил 10+ систем безопасности",
+                projects_count: 12,
+                created_at: "2023-01-08"
+            },
+            {
+                id: 14,
+                full_name: "Волков Роман Александрович",
+                email: "volkov@cardflow.ru",
+                phone: "+7 (999) 456-78-90",
+                position: "Менеджер проектов",
+                role: "user",
+                status: "active",
+                achievements: "Работа с международными клиентами",
+                projects_count: 7,
+                created_at: "2023-06-05"
+            },
+            {
+                id: 15,
+                full_name: "Алексеев Виктор Сергеевич",
+                email: "alekseev@cardflow.ru",
+                phone: "+7 (999) 567-89-01",
+                position: "Старший менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Координатор региональных проектов",
+                projects_count: 14,
+                created_at: "2023-03-28"
+            },
+            {
+                id: 16,
+                full_name: "Лебедев Александр Игоревич",
+                email: "lebedev@cardflow.ru",
+                phone: "+7 (999) 678-90-12",
+                position: "Менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Специалист по CRM-системам",
+                projects_count: 9,
+                created_at: "2023-04-12"
+            },
+            {
+                id: 17,
+                full_name: "Семенов Олег Владимирович",
+                email: "semenov@cardflow.ru",
+                phone: "+7 (999) 789-01-23",
+                position: "Менеджер проектов",
+                role: "user",
+                status: "active",
+                achievements: "Эксперт в сетевых решениях",
+                projects_count: 11,
+                created_at: "2023-02-20"
+            },
+
+            // Менеджеры из Лист1
+            {
+                id: 18,
+                full_name: "Селиванова Елена Михайловна",
+                email: "selivanova@cardflow.ru",
+                phone: "+7 (999) 890-12-34",
+                position: "Менеджер по развитию",
+                role: "user",
+                status: "active",
+                achievements: "Запустила 3 новых направления бизнеса",
+                projects_count: 8,
+                created_at: "2023-05-15"
+            },
+            {
+                id: 19,
+                full_name: "Гармаш Сергей Александрович",
+                email: "garmash@cardflow.ru",
+                phone: "+7 (999) 901-23-45",
+                position: "Старший менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Руководитель отдела корпоративных продаж",
+                projects_count: 16,
+                created_at: "2023-01-10"
+            },
+            {
+                id: 20,
+                full_name: "Скорик Анна Дмитриевна",
+                email: "skorik@cardflow.ru",
+                phone: "+7 (999) 012-34-56",
+                position: "Менеджер проектов",
+                role: "user",
+                status: "active",
+                achievements: "Специалист по цифровой трансформации",
+                projects_count: 7,
+                created_at: "2023-06-22"
+            },
+            {
+                id: 21,
+                full_name: "Пудов Кирилл Андреевич",
+                email: "pudov@cardflow.ru",
+                phone: "+7 (999) 123-45-67",
+                position: "Менеджер",
+                role: "user",
+                status: "active",
+                achievements: "Эксперт в области ИИ и машинного обучения",
+                projects_count: 5,
+                created_at: "2023-07-18"
+            },
+            {
+                id: 22,
+                full_name: "Максименко Денис Викторович",
+                email: "maksimenko@cardflow.ru",
+                phone: "+7 (999) 234-56-78",
+                position: "Менеджер по инновациям",
+                role: "user",
+                status: "active",
+                achievements: "Внедрил блокчейн-решения для 2 крупных банков",
+                projects_count: 6,
+                created_at: "2023-04-08"
+            },
+            {
+                id: 23,
+                full_name: "Воротнев Леонид Петрович",
+                email: "vorotnev@cardflow.ru",
+                phone: "+7 (999) 345-67-89",
+                position: "Ведущий менеджер",
+                role: "user",
+                status: "active",
+                achievements: "20+ лет опыта в ИТ-консалтинге",
+                projects_count: 18,
+                created_at: "2023-01-05"
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUsers();
+            setupEventListeners();
+            feather.replace();
+        });
+
+        function initializeUsers() {
+            // Проверяем, есть ли сохраненные пользователи в localStorage
+            const savedUsers = localStorage.getItem('cardflow_users');
+            
+            if (savedUsers) {
+                // Загружаем сохраненных пользователей
+                allUsers = JSON.parse(savedUsers);
+                // Находим максимальный ID для продолжения нумерации
+                nextUserId = Math.max(...allUsers.map(u => u.id)) + 1;
+            } else {
+                // Создаем демо-данные и сохраняем их
+                allUsers = JSON.parse(JSON.stringify(demoUsers)); // глубокое копирование
+                localStorage.setItem('cardflow_users', JSON.stringify(allUsers));
+            }
+            
+            currentUsers = [...allUsers];
+            updateStatistics();
+            renderUsersTable();
+            setupPagination();
+        }
+
+        function setupEventListeners() {
+            // Кнопка добавления пользователя
+            document.getElementById('addUserBtn').addEventListener('click', () => {
+                openUserModal();
+            });
+
+            // Поиск
+            document.getElementById('searchUsers').addEventListener('input', (e) => {
+                filterUsers(e.target.value, document.getElementById('roleFilter').value);
+            });
+
+            // Фильтр по роли
+            document.getElementById('roleFilter').addEventListener('change', (e) => {
+                filterUsers(document.getElementById('searchUsers').value, e.target.value);
+            });
+
+            // Закрытие модального окна
+            document.getElementById('closeModal').addEventListener('click', closeUserModal);
+            document.getElementById('cancelModal').addEventListener('click', closeUserModal);
+
+            // Обработка формы
+            document.getElementById('userForm').addEventListener('submit', handleUserSubmit);
+
+            // Экспорт
+            document.getElementById('exportUsers').addEventListener('click', exportUsers);
+
+            // Закрытие модального окна при клике на фон
+            document.getElementById('userModal').addEventListener('click', (e) => {
+                if (e.target.id === 'userModal') {
+                    closeUserModal();
+                }
+            });
+        }
+
+        function filterUsers(searchTerm, roleFilter) {
+            currentUsers = allUsers.filter(user => {
+                const matchesSearch = !searchTerm || 
+                    user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesRole = !roleFilter || user.role === roleFilter;
+                return matchesSearch && matchesRole;
+            });
+            currentPage = 1;
+            renderUsersTable();
+            setupPagination();
+        }
+
+        function updateStatistics() {
+            document.getElementById('totalUsers').textContent = allUsers.length;
+            document.getElementById('adminUsers').textContent = allUsers.filter(u => u.role === 'admin').length;
+            document.getElementById('analystUsers').textContent = allUsers.filter(u => u.role === 'analyst').length;
+            document.getElementById('managerUsers').textContent = allUsers.filter(u => u.role === 'user').length;
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTable');
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = startIndex + usersPerPage;
+            const usersToShow = currentUsers.slice(startIndex, endIndex);
+
+            tbody.innerHTML = '';
+
+            if (usersToShow.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            <i data-feather="users" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                            <p>Пользователи не найдены</p>
+                        </td>
+                    </tr>
+                `;
+                feather.replace();
+                return;
+            }
+
+            usersToShow.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <i data-feather="user" class="text-purple-600 w-5 h-5"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${user.full_name}</div>
+                                <div class="text-sm text-gray-500">${user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${user.position}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full ${getRoleClass(user.role)}">
+                            ${getRoleText(user.role)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${user.projects_count || 0}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${user.status === 'active' ? 'Активен' : 'Неактивен'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex gap-2">
+                            <button onclick="viewUserProfile(${user.id})" class="text-purple-600 hover:text-purple-900 transition" title="Просмотр профиля">
+                                <i data-feather="eye"></i>
+                            </button>
+                            <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-900 transition" title="Редактировать">
+                                <i data-feather="edit"></i>
+                            </button>
+                            <button onclick="changeUserRole(${user.id})" class="text-orange-600 hover:text-orange-900 transition" title="Изменить роль">
+                                <i data-feather="shield"></i>
+                            </button>
+                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900 transition" title="Удалить">
+                                <i data-feather="trash-2"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            feather.replace();
+        }
+
+        function setupPagination() {
+            const totalPages = Math.ceil(currentUsers.length / usersPerPage);
+            const pageNumbers = document.getElementById('pageNumbers');
+            const prevButton = document.getElementById('prevPage');
+            const nextButton = document.getElementById('nextPage');
+            const showingCount = document.getElementById('showingCount');
+            const totalCount = document.getElementById('totalCount');
+
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = Math.min(startIndex + usersPerPage, currentUsers.length);
+            
+            showingCount.textContent = `${startIndex + 1}-${endIndex}`;
+            totalCount.textContent = currentUsers.length;
+
+            prevButton.disabled = currentPage === 1;
+            nextButton.disabled = currentPage === totalPages;
+
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderUsersTable();
+                    setupPagination();
+                }
+            };
+
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderUsersTable();
+                    setupPagination();
+                }
+            };
+
+            pageNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.className = `px-3 py-1 border rounded text-sm ${currentPage === i ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-300'}`;
+                button.textContent = i;
+                button.onclick = () => {
+                    currentPage = i;
+                    renderUsersTable();
+                    setupPagination();
+                };
+                pageNumbers.appendChild(button);
+            }
+        }
+
+        function getRoleText(role) {
+            const roles = {
+                'admin': 'Администратор',
+                'analyst': 'Аналитик', 
+                'user': 'Менеджер'
+            };
+            return roles[role] || role;
+        }
+
+        function getRoleClass(role) {
+            const classes = {
+                'admin': 'user-role-admin',
+                'analyst': 'user-role-analyst',
+                'user': 'user-role-user'
+            };
+            return classes[role] || '';
+        }
+
+        function openUserModal(user = null) {
+            const modal = document.getElementById('userModal');
+            const title = document.getElementById('modalTitle');
+            
+            if (user) {
+                title.textContent = 'Редактировать пользователя';
+                document.getElementById('userId').value = user.id;
+                document.getElementById('fullName').value = user.full_name;
+                document.getElementById('email').value = user.email;
+                document.getElementById('phone').value = user.phone || '';
+                document.getElementById('position').value = user.position || '';
+                document.getElementById('role').value = user.role;
+                document.getElementById('status').value = user.status;
+                document.getElementById('achievements').value = user.achievements || '';
+            } else {
+                title.textContent = 'Добавить пользователя';
+                document.getElementById('userForm').reset();
+                document.getElementById('userId').value = '';
+                document.getElementById('status').value = 'active';
+            }
+            
+            modal.classList.remove('hidden');
+            feather.replace();
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+
+        function handleUserSubmit(e) {
+            e.preventDefault();
+            
+            const userData = {
+                full_name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                position: document.getElementById('position').value,
+                role: document.getElementById('role').value,
+                status: document.getElementById('status').value,
+                achievements: document.getElementById('achievements').value,
+                projects_count: 0
+            };
+
+            const userId = document.getElementById('userId').value;
+
+            try {
+                if (userId) {
+                    // Обновление пользователя
+                    const userIndex = allUsers.findIndex(u => u.id == userId);
+                    if (userIndex !== -1) {
+                        // Сохраняем старые данные, которые не меняются
+                        const oldUserData = allUsers[userIndex];
+                        allUsers[userIndex] = { 
+                            ...oldUserData,
+                            ...userData 
+                        };
+                    }
+                } else {
+                    // Создание пользователя
+                    const newUser = {
+                        id: nextUserId++,
+                        ...userData,
+                        created_at: new Date().toISOString().split('T')[0]
+                    };
+                    allUsers.push(newUser);
+                }
+                
+                // Сохраняем ВСЕХ пользователей в localStorage
+                localStorage.setItem('cardflow_users', JSON.stringify(allUsers));
+                
+                closeUserModal();
+                currentUsers = [...allUsers];
+                updateStatistics();
+                renderUsersTable();
+                setupPagination();
+                showNotification('Пользователь успешно сохранен!', 'success');
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showNotification('Ошибка при сохранении пользователя', 'error');
+            }
+        }
+
+        // Функции действий
+        function viewUserProfile(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                // Сохраняем данные пользователя для просмотра профиля
+                localStorage.setItem('viewing_user_profile', JSON.stringify(user));
+                // Переходим на страницу профиля
+                window.location.href = 'user-profile.html';
+            }
+        }
+
+        function editUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                openUserModal(user);
+            }
+        }
+
+        function changeUserRole(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+                const newRole = prompt(`Текущая роль: ${getRoleText(user.role)}\nВведите новую роль (admin/analyst/user):`, user.role);
+                if (newRole && ['admin', 'analyst', 'user'].includes(newRole)) {
+                    user.role = newRole;
+                    // Сохраняем изменения ВСЕХ пользователей
+                    localStorage.setItem('cardflow_users', JSON.stringify(allUsers));
+                    renderUsersTable();
+                    updateStatistics();
+                    showNotification('Роль пользователя изменена!', 'success');
+                }
+            }
+        }
+
+        function deleteUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user && confirm(`Вы уверены, что хотите удалить пользователя ${user.full_name}?`)) {
+                allUsers = allUsers.filter(u => u.id !== userId);
+                // Сохраняем изменения ВСЕХ пользователей
+                localStorage.setItem('cardflow_users', JSON.stringify(allUsers));
+                currentUsers = currentUsers.filter(u => u.id !== userId);
+                renderUsersTable();
+                updateStatistics();
+                setupPagination();
+                showNotification('Пользователь удален!', 'success');
+            }
+        }
+
+        function exportUsers() {
+            const data = currentUsers.map(user => ({
+                'ФИО': user.full_name,
+                'Email': user.email,
+                'Телефон': user.phone || '',
+                'Должность': user.position || '',
+                'Роль': getRoleText(user.role),
+                'Статус': user.status === 'active' ? 'Активен' : 'Неактивен',
+                'Проектов': user.projects_count || 0,
+                'Достижения': user.achievements || '',
+                'Дата регистрации': user.created_at
+            }));
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Пользователи");
+            XLSX.writeFile(wb, "cardflow_users.xlsx");
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type} ${type === 'success' ? 'success' : 'error'}`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i data-feather="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-4 h-4"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Инициализируем иконки
+            feather.replace();
+            
+            // Показываем уведомление
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Скрываем через 3 секунды
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Делаем функции глобальными для использования в onclick
+        window.viewUserProfile = viewUserProfile;
+        window.editUser = editUser;
+        window.changeUserRole = changeUserRole;
+        window.deleteUser = deleteUser;
+    </script>
+</body>
+</html>

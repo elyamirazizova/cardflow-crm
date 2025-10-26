@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Аналитический дашборд</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/footer.js"></script>
+</head>
+<body class="bg-gray-50">
+    <custom-navbar></custom-navbar>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Аналитический дашборд</h1>
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <select class="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-600">
+                        <option>Последние 7 дней</option>
+                        <option>Последние 30 дней</option>
+                        <option>Текущий квартал</option>
+                        <option>Произвольный период</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i data-feather="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <button class="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 transition">
+                    <i data-feather="download"></i>
+                    <span>Экспорт</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Общая выручка</p>
+                        <h3 class="text-2xl font-bold text-purple-600">4,240,000 ₽</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i data-feather="dollar-sign" class="text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-green-500 text-sm font-medium flex items-center">
+                        <i data-feather="trending-up" class="w-4 h-4 mr-1"></i>
+                        +12.5% с прошлого периода
+                    </span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Активных проектов</p>
+                        <h3 class="text-2xl font-bold text-blue-600">18</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i data-feather="activity" class="text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-green-500 text-sm font-medium flex items-center">
+                        <i data-feather="trending-up" class="w-4 h-4 mr-1"></i>
+                        +2 с прошлого периода
+                    </span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Конверсия</p>
+                        <h3 class="text-2xl font-bold text-green-600">42%</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i data-feather="percent" class="text-green-600"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-green-500 text-sm font-medium flex items-center">
+                        <i data-feather="trending-up" class="w-4 h-4 mr-1"></i>
+                        +5% с прошлого периода
+                    </span>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Средний чек</p>
+                        <h3 class="text-2xl font-bold text-orange-600">235,555 ₽</h3>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-lg">
+                        <i data-feather="credit-card" class="text-orange-600"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <span class="text-red-500 text-sm font-medium flex items-center">
+                        <i data-feather="trending-down" class="w-4 h-4 mr-1"></i>
+                        -3% с прошлого периода
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Revenue Chart -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Динамика выручки и затрат</h2>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-1 bg-purple-600 text-white text-sm rounded-lg">Месяц</button>
+                        <button class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg">Квартал</button>
+                        <button class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg">Год</button>
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Project Distribution -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Распределение проектов</h2>
+                    <select class="bg-gray-100 border-0 text-gray-700 text-sm rounded-lg px-3 py-1">
+                        <option>По статусам</option>
+                        <option>По менеджерам</option>
+                        <option>По клиентам</option>
+                    </select>
+                </div>
+                <div class="h-80">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Manager Performance -->
+            <div class="bg-white rounded-xl shadow p-6 lg:col-span-2">
+                <h2 class="text-xl font-semibold mb-6">Эффективность менеджеров</h2>
+                <div class="h-80">
+                    <canvas id="managerChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-xl font-semibold mb-6">Последняя активность</h2>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3">
+                        <div class="bg-purple-100 p-2 rounded-lg">
+                            <i data-feather="dollar-sign" class="text-purple-600 w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium">Новый платеж по проекту "Альфа"</p>
+                            <p class="text-xs text-gray-500">Иванов И. · 10 минут назад</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-blue-100 p-2 rounded-lg">
+                            <i data-feather="edit" class="text-blue-600 w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium">Обновлен статус проекта "Бета"</p>
+                            <p class="text-xs text-gray-500">Петров П. · 1 час назад</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-green-100 p-2 rounded-lg">
+                            <i data-feather="plus" class="text-green-600 w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium">Добавлен новый проект "Гамма"</p>
+                            <p class="text-xs text-gray-500">Сидоров С. · 2 часа назад</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-orange-100 p-2 rounded-lg">
+                            <i data-feather="message-square" class="text-orange-600 w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium">Новый комментарий к проекту "Дельта"</p>
+                            <p class="text-xs text-gray-500">Иванов И. · 5 часов назад</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-red-100 p-2 rounded-lg">
+                            <i data-feather="alert-circle" class="text-red-600 w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium">Просрочен дедлайн проекта "Эпсилон"</p>
+                            <p class="text-xs text-gray-500">Система · Вчера</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart');
+            const revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+                    datasets: [{
+                        label: 'Выручка',
+                        data: [1200000, 1900000, 1500000, 2000000, 1800000, 2200000],
+                        borderColor: '#7400bc',
+                        backgroundColor: 'rgba(116, 0, 188, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Затраты',
+                        data: [800000, 1200000, 900000, 1100000, 1000000, 1300000],
+                        borderColor: '#ff4800',
+                        backgroundColor: 'rgba(255, 72, 0, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Distribution Chart
+            const distributionCtx = document.getElementById('distributionChart');
+            const distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Новые', 'В работе', 'На согласовании', 'Завершённые'],
+                    datasets: [{
+                        data: [15, 25, 10, 8],
+                        backgroundColor: ['#7400bc', '#3b82f6', '#f59e0b', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // Manager Chart
+            const managerCtx = document.getElementById('managerChart');
+            const managerChart = new Chart(managerCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Иванов И.', 'Петров П.', 'Сидоров С.'],
+                    datasets: [{
+                        label: 'Выручка',
+                        data: [1200000, 1800000, 900000],
+                        backgroundColor: '#7400bc'
+                    }, {
+                        label: 'Затраты',
+                        data: [800000, 1200000, 600000],
+                        backgroundColor: '#ff4800'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            feather.replace();
+        });
+    </script>
+</body>
+</html>

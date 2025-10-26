@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Отчёты</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/footer.js"></script>
+</head>
+<body class="bg-white">
+    <custom-navbar></custom-navbar>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Отчёты</h1>
+
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-semibold mb-4">Фильтры отчёта</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Дата с</label>
+                    <input type="date" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Дата по</label>
+                    <input type="date" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Менеджер</label>
+                    <select class="w-full p-2 border border-gray-300 rounded">
+                        <option>Все менеджеры</option>
+                        <option>Иванов И.</option>
+                        <option>Петров П.</option>
+                        <option>Сидоров С.</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">Выберите данные для отчёта:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report1" class="mr-2">
+                        <label for="report1">Название проекта</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report2" class="mr-2">
+                        <label for="report2">Менеджер</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report3" class="mr-2">
+                        <label for="report3">Клиент</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report4" class="mr-2">
+                        <label for="report4">Статус</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report5" class="mr-2">
+                        <label for="report5">Дата начала</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report6" class="mr-2">
+                        <label for="report6">Дата окончания</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report7" class="mr-2">
+                        <label for="report7">Выручка</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report8" class="mr-2">
+                        <label for="report8">Затраты</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="report9" class="mr-2">
+                        <label for="report9">Прибыль</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <div class="relative">
+                    <button id="exportDropdownBtn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-opacity-90 transition">
+                        <i data-feather="download"></i>
+                        <span>Экспорт</span>
+                        <i data-feather="chevron-down"></i>
+                    </button>
+                    <div id="exportDropdown" class="hidden absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10">
+                        <div class="py-1">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="exportToPDF()">PDF</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="exportToExcel()">Excel</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">LibreOffice</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">МойОфис</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="bg-secondary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-opacity-90 transition">
+                    <i data-feather="refresh-cw"></i>
+                    <span>Сформировать</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Предпросмотр отчёта</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Менеджер</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Клиент</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Выручка</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Затраты</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Прибыль</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">Проект "Альфа"</td>
+                            <td class="px-6 py-4 whitespace-nowrap">Иванов И.</td>
+                            <td class="px-6 py-4 whitespace-nowrap">ООО "Ромашка"</td>
+                            <td class="px-6 py-4 whitespace-nowrap">1,200,000 ₽</td>
+                            <td class="px-6 py-4 whitespace-nowrap">800,000 ₽</td>
+                            <td class="px-6 py-4 whitespace-nowrap">400,000 ₽</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">Проект "Бета"</td>
+                            <td class="px-6 py-4 whitespace-nowrap">Петров П.</td>
+                            <td class="px-6 py-4 whitespace-nowrap">АО "Лютик"</td>
+                            <td class="px-6 py-4 whitespace-nowrap">1,800,000 ₽</td>
+                            <td class="px-6 py-4 whitespace-nowrap">1,200,000 ₽</td>
+                            <td class="px-6 py-4 whitespace-nowrap">600,000 ₽</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+
+    <script>
+        let allProjects = [];
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Load projects from API
+            try {
+                allProjects = await api.getProjects();
+                displayProjects(allProjects);
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+
+            // Toggle export dropdown
+            const exportBtn = document.getElementById('exportDropdownBtn');
+            const exportDropdown = document.getElementById('exportDropdown');
+            
+            exportBtn.addEventListener('click', function() {
+                exportDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!exportBtn.contains(event.target) && !exportDropdown.contains(event.target)) {
+                    exportDropdown.classList.add('hidden');
+                }
+            });
+
+            // Применить фильтры кнопка
+            document.querySelector('button.flex.items-center.gap-2').addEventListener('click', function() {
+                applyFilters();
+            });
+
+            feather.replace();
+        });
+
+        function displayProjects(projects) {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            projects.forEach(project => {
+                const profit = Number(project.revenue || 0) - Number(project.expenses || 0);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${project.project_name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${project.manager}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${project.organization}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(project.revenue || 0)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(project.expenses || 0)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(profit)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function applyFilters() {
+            const fromDate = document.querySelector('input[type="date"]').value;
+            const toDate = document.querySelectorAll('input[type="date"]')[1].value;
+            const manager = document.querySelector('select').value;
+            
+            let filtered = [...allProjects];
+            
+            // Here would be filtering logic
+            displayProjects(filtered);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ru-RU', { 
+                style: 'currency', 
+                currency: 'RUB',
+                minimumFractionDigits: 0 
+            }).format(amount);
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.text('Отчёт по проектам CardFlow', 10, 10);
+            
+            let yPos = 30;
+            doc.setFontSize(10);
+            allProjects.slice(0, 10).forEach((project, index) => {
+                doc.text(`${index + 1}. ${project.project_name} - ${formatCurrency(project.revenue || 0)}`, 10, yPos);
+                yPos += 10;
+            });
+            
+            doc.save('cardflow_report.pdf');
+            document.getElementById('exportDropdown').classList.add('hidden');
+        }
+
+        function exportToExcel() {
+            const data = allProjects.map(p => ({
+                'Название': p.project_name,
+                'Менеджер': p.manager,
+                'Клиент': p.organization,
+                'Выручка': p.revenue || 0,
+                'Затраты': p.expenses || 0,
+                'Прибыль': Number(p.revenue || 0) - Number(p.expenses || 0)
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, "Отчёт");
+            XLSX.writeFile(wb, "cardflow_report.xlsx");
+            document.getElementById('exportDropdown').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

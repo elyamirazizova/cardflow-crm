@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Проекты</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/projectModal.js"></script>
+    <script src="components/footer.js"></script>
+</head>
+<body class="bg-white">
+    <custom-navbar></custom-navbar>
+
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Реестр проектов</h1>
+            <button id="addProjectBtn" class="bg-purple-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-purple-700 transition">
+                <i data-feather="plus"></i>
+                <span>Добавить проект</span>
+            </button>
+        </div>
+
+        <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Projects loaded here -->
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+    <project-modal></project-modal>
+
+    <script src="components/project-card.js"></script>
+    <script>
+        // Load projects from API
+        async function loadProjects() {
+            try {
+                const projects = await api.getProjects();
+                const container = document.getElementById('projectsContainer');
+                
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                if (projects.length === 0) {
+                    container.innerHTML = '<div class="col-span-3 text-center py-12 text-gray-500">Нет проектов. Создайте первый!</div>';
+                    return;
+                }
+                
+                projects.forEach(project => {
+                    const card = document.createElement('project-card');
+                    card.setAttribute('project-name', project.project_name);
+                    card.setAttribute('organization', project.organization);
+                    card.setAttribute('inn', project.inn);
+                    card.setAttribute('manager', project.manager);
+                    card.setAttribute('service', project.service);
+                    card.setAttribute('payment-type', project.payment_type);
+                    card.setAttribute('business-segment', project.business_segment);
+                    card.setAttribute('year', project.year);
+                    card.setAttribute('stage', project.stage);
+                    card.setAttribute('status', project.status);
+                    card.setAttribute('revenue', project.revenue || '0');
+                    card.setAttribute('expenses', project.expenses || '0');
+                    card.setAttribute('description', project.description || '');
+                    card.setAttribute('industry-solution', project.industry_solution ? 'true' : 'false');
+                    card.setAttribute('forecast', project.forecast ? 'true' : 'false');
+                    card.setAttribute('probability', project.probability || '0');
+                    card.setAttribute('stage-duration', project.stage_duration + ' дней');
+                    card.setAttribute('last-update', new Date(project.updated_at || project.created_at).toLocaleString('ru-RU'));
+                    container.appendChild(card);
+                });
+                
+                feather.replace();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('projectsContainer').innerHTML = '<div class="col-span-3 text-center py-12 text-red-500">Ошибка: ' + error.message + '</div>';
+            }
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadProjects();
+            
+            // Add project button
+            document.getElementById('addProjectBtn').addEventListener('click', function() {
+                document.querySelector('project-modal').style.display = 'flex';
+            });
+        });
+    </script>
+</body>
+</html>
+

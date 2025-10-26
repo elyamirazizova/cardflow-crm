@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Бизнес дашборды</title>
+<link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/footer.js"></script>
+</head>
+<body class="bg-white">
+    <custom-navbar></custom-navbar>
+
+   <div class="container mx-auto px-4 py-8">
+   <!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Краткие сведения по проектам</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    body {
+      background: #ffffff;
+      font-family: 'Inter', sans-serif;
+      color: #111827;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .chart-container {
+      background: white;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      height: 240px;
+    }
+    .chart-container h2 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #7400bc;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .metric-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .metric-card .label {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .metric-card .value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #7400bc;
+    }
+    table {
+      font-size: 12px;
+      width: 100%;
+    }
+    th {
+      text-align: left;
+      color: #6b7280;
+      font-weight: 600;
+      padding-bottom: 4px;
+    }
+    td {
+      padding: 2px 0;
+    }
+  </style>
+</head>
+<body class="px-4 py-4">
+
+  <h1 class="text-2xl font-bold mb-4 text-[#7400bc]">Краткие сведения по проектам</h1>
+
+  <!-- МЕТРИКИ -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">Всего проектов</div>
+      <div class="value">20</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Активных</div>
+      <div class="value text-[#ff4800]">14</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Средняя выручка</div>
+      <div class="value">1,320,000 ₽</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Средние затраты</div>
+      <div class="value">920,000 ₽</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Средняя прибыль</div>
+      <div class="value">400,000 ₽</div>
+    </div>
+  </div>
+
+  <!-- ГРАФИКИ -->
+  <div class="dashboard-grid mb-6">
+    <div class="chart-container">
+      <h2>Распределение по этапам</h2>
+      <canvas id="stageChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h2>Эффективность менеджеров</h2>
+      <canvas id="managerChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h2>Доходы и расходы по месяцам</h2>
+      <canvas id="financeChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h2>Распределение по сегментам</h2>
+      <canvas id="segmentChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h2>Средняя прибыль по типам услуг</h2>
+      <canvas id="serviceProfitChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ТАБЛИЦА -->
+  <div class="bg-white p-3 rounded-lg shadow-sm">
+    <h2 class="text-sm font-semibold text-[#7400bc] mb-2">Топ-5 проектов по прибыли</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Проект</th>
+          <th>Менеджер</th>
+          <th>Выручка</th>
+          <th>Затраты</th>
+          <th>Прибыль</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Альфа-Рост</td><td>Иванов И.И.</td><td>1 800 000 ₽</td><td>1 100 000 ₽</td><td class="text-green-700">700 000 ₽</td></tr>
+        <tr><td>Бета-Сила</td><td>Петров П.П.</td><td>2 100 000 ₽</td><td>1 400 000 ₽</td><td class="text-green-700">700 000 ₽</td></tr>
+        <tr><td>Цифро-Нет</td><td>Сидоров С.С.</td><td>1 600 000 ₽</td><td>1 000 000 ₽</td><td class="text-green-700">600 000 ₽</td></tr>
+        <tr><td>Инфо-Без</td><td>Кузнецов К.К.</td><td>1 450 000 ₽</td><td>900 000 ₽</td><td class="text-green-700">550 000 ₽</td></tr>
+        <tr><td>Облако+</td><td>Смирнов С.С.</td><td>1 900 000 ₽</td><td>1 400 000 ₽</td><td class="text-green-700">500 000 ₽</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. Этапы
+      new Chart(document.getElementById('stageChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Лид', 'Переговоры', 'Контракт', 'Реализация', 'Завершено'],
+          datasets: [{
+            data: [5, 4, 3, 6, 2],
+            backgroundColor: ['#7400bc', '#ff4800', '#a78bfa', '#c084fc', '#e9d5ff'],
+            borderWidth: 0
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, cutout: '70%' }
+      });
+
+      // 2. Менеджеры
+      new Chart(document.getElementById('managerChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Иванов', 'Петров', 'Сидоров', 'Кузнецов', 'Смирнов'],
+          datasets: [{
+            label: 'Выручка',
+            data: [18, 21, 16, 14, 19],
+            backgroundColor: '#7400bc'
+          }, {
+            label: 'Затраты',
+            data: [11, 14, 10, 9, 14],
+            backgroundColor: '#ff4800'
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      // 3. Финансы по месяцам
+      new Chart(document.getElementById('financeChart'), {
+        type: 'line',
+        data: {
+          labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+          datasets: [{
+            label: 'Выручка',
+            data: [1.2, 1.5, 1.7, 2.1, 2.0, 2.4, 2.2, 2.6, 2.3, 2.1, 2.0, 2.4],
+            borderColor: '#7400bc',
+            tension: 0.3
+          }, {
+            label: 'Затраты',
+            data: [0.9, 1.1, 1.3, 1.5, 1.4, 1.8, 1.6, 1.7, 1.5, 1.4, 1.6, 1.7],
+            borderColor: '#ff4800',
+            tension: 0.3
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+
+      // 4. Сегменты
+      new Chart(document.getElementById('segmentChart'), {
+        type: 'pie',
+        data: {
+          labels: ['Госсектор', 'Средний бизнес', 'Малый бизнес', 'Корпоративные'],
+          datasets: [{
+            data: [5, 6, 4, 5],
+            backgroundColor: ['#7400bc', '#ff4800', '#c084fc', '#fbbf24']
+          }]
+        },
+        options: { plugins: { legend: { display: false } } }
+      });
+
+      // 5. Прибыль по услугам
+      new Chart(document.getElementById('serviceProfitChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Интернет', 'Телефония', 'Инфобез', 'Облачные', 'Отраслевые'],
+          datasets: [{
+            data: [0.5, 0.7, 0.6, 0.8, 0.4],
+            backgroundColor: ['#7400bc', '#a78bfa', '#c084fc', '#ff4800', '#fbbf24']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    });
+  </script>
+
+</body>
+</html>

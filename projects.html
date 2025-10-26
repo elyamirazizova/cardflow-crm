@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Проекты</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/projectModal.js"></script>
+    <script src="components/footer.js"></script>
+</head>
+<body class="bg-white">
+    <custom-navbar></custom-navbar>
+
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Реестр проектов</h1>
+            <button id="addProjectBtn" class="bg-purple-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-purple-700 transition">
+                <i data-feather="plus"></i>
+                <span>Добавить проект</span>
+            </button>
+        </div>
+
+        <div id="projectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Projects loaded here -->
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+    <project-modal></project-modal>
+
+    <script src="components/project-card.js"></script>
+// В projects.html замени скрипт на этот:
+<script>
+    // Load projects from API or localStorage
+    async function loadProjects() {
+        try {
+            let projects = [];
+            
+            // Пробуем загрузить из API
+            try {
+                projects = await api.getProjects();
+                console.log('Projects loaded from API:', projects.length);
+            } catch (apiError) {
+                console.log('API недоступен, загружаем из localStorage');
+                // Загружаем из localStorage
+                projects = JSON.parse(localStorage.getItem('projects') || '[]');
+                console.log('Projects loaded from localStorage:', projects.length);
+            }
+            
+            const container = document.getElementById('projectsContainer');
+            
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (projects.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-3 text-center py-12 text-gray-500">
+                        <i data-feather="folder" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p class="text-lg mb-2">Нет проектов</p>
+                        <p class="text-sm mb-4">Создайте первый проект или загрузите демо-данные</p>
+                        <button onclick="initDemoData()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                            Загрузить демо-данные
+                        </button>
+                    </div>
+                `;
+                feather.replace();
+                return;
+            }
+            
+            console.log('Отображаем проектов:', projects.length);
+            
+            projects.forEach(project => {
+                const card = document.createElement('project-card');
+                
+                // Используем правильные названия полей из нового формата
+                card.setAttribute('project-name', project.project_name || 'Без названия');
+                card.setAttribute('organization', project.organization || 'Не указана');
+                card.setAttribute('inn', project.inn || 'Не указан');
+                card.setAttribute('manager', project.manager || 'Не назначен');
+                card.setAttribute('service', getServiceText(project.service) || 'Не указана');
+                card.setAttribute('payment-type', getPaymentTypeText(project.payment_type) || 'Не указан');
+                card.setAttribute('business-segment', getBusinessSegmentText(project.business_segment) || 'Не указан');
+                card.setAttribute('year', project.year || '2024');
+                card.setAttribute('stage', project.stage || 'new');
+                card.setAttribute('status', project.status || 'new');
+                card.setAttribute('revenue', project.revenue || '0');
+                card.setAttribute('expenses', project.expenses || '0');
+                card.setAttribute('description', project.description || 'Описание не добавлено');
+                card.setAttribute('industry-solution', (project.industry_solution || false).toString());
+                card.setAttribute('forecast', (project.forecast || false).toString());
+                card.setAttribute('probability', project.probability || '0');
+                card.setAttribute('stage-duration', project.stage_duration ? `${project.stage_duration} дней` : 'Не указан');
+                card.setAttribute('last-update', project.created_at ? `Создано: ${new Date(project.created_at).toLocaleString('ru-RU')}` : 'Нет данных');
+                
+                container.appendChild(card);
+            });
+            
+            feather.replace();
+        } catch (error) {
+            console.error('Error:', error);
+            const container = document.getElementById('projectsContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="col-span-3 text-center py-12 text-red-500">
+                        <i data-feather="alert-triangle" class="w-12 h-12 mx-auto mb-4"></i>
+                        <p>Ошибка загрузки: ${error.message}</p>
+                        <button onclick="loadProjects()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                            Попробовать снова
+                        </button>
+                    </div>
+                `;
+                feather.replace();
+            }
+        }
+    }
+
+    // Вспомогательные функции для преобразования значений
+    function getServiceText(service) {
+        const services = {
+            'cloud': 'Облачные решения',
+            'network': 'Сетевые решения',
+            'security': 'Безопасность',
+            'consulting': 'Консалтинг',
+            'support': 'Техническая поддержка'
+        };
+        return services[service] || service;
+    }
+
+    function getPaymentTypeText(type) {
+        const types = {
+            'prepayment': 'Предоплата',
+            'postpayment': 'Постоплата',
+            'installment': 'Рассрочка'
+        };
+        return types[type] || type;
+    }
+
+    function getBusinessSegmentText(segment) {
+        const segments = {
+            'sme': 'Малый и средний бизнес',
+            'corporate': 'Корпоративный сегмент',
+            'government': 'Госсектор'
+        };
+        return segments[segment] || segment;
+    }
+
+    // Load on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadProjects();
+        
+        // Add project button
+        document.getElementById('addProjectBtn').addEventListener('click', function() {
+            document.querySelector('project-modal').style.display = 'flex';
+        });
+        
+        // Добавляем кнопку перезагрузки демо-данных
+        addDemoDataButton();
+    });
+    
+    function addDemoDataButton() {
+        const header = document.querySelector('.flex.justify-between.items-center.mb-6');
+        if (header) {
+            const demoBtn = document.createElement('button');
+            demoBtn.className = 'bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-700 transition ml-4';
+            demoBtn.innerHTML = `
+                <i data-feather="refresh-cw"></i>
+                <span>Обновить демо-данные</span>
+            `;
+            demoBtn.onclick = function() {
+                if (confirm('Это удалит все текущие проекты и загрузит свежие демо-данные. Продолжить?')) {
+                    initDemoData();
+                }
+            };
+            header.appendChild(demoBtn);
+            feather.replace();
+        }
+    }
+    
+    // Делаем функцию доступной глобально
+    window.initDemoData = initDemoData;
+</script>
+</body>
+</html>
+

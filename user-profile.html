@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardFlow - Профиль сотрудника</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="api.js"></script>
+    <script src="components/navbar.js"></script>
+    <script src="components/footer.js"></script>
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #7400bc;
+            border: 2px solid white;
+        }
+        .skill-bar {
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .skill-progress {
+            height: 8px;
+            background: linear-gradient(90deg, #7400bc, #9b59d7);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <custom-navbar></custom-navbar>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex items-center gap-4 mb-6">
+            <button onclick="window.history.back()" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition">
+                <i data-feather="arrow-left" class="w-5 h-5"></i>
+            </button>
+            <h1 class="text-3xl font-bold">Профиль сотрудника</h1>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Левая колонка - основная информация -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-lg shadow sticky top-8">
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="w-32 h-32 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                            <i data-feather="user" class="w-16 h-16 text-purple-600"></i>
+                        </div>
+                        <h2 id="userName" class="text-xl font-semibold text-center">Загрузка...</h2>
+                        <p id="userRole" class="text-gray-500 text-center">Загрузка...</p>
+                        <p id="userPosition" class="text-gray-600 text-center mt-1">Загрузка...</p>
+                        <div id="userStatus" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1 flex items-center gap-2">
+                                <i data-feather="mail" class="w-4 h-4"></i>
+                                Email
+                            </h3>
+                            <p id="userEmail" class="text-gray-700">Загрузка...</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1 flex items-center gap-2">
+                                <i data-feather="phone" class="w-4 h-4"></i>
+                                Телефон
+                            </h3>
+                            <p id="userPhone" class="text-gray-700">Загрузка...</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1 flex items-center gap-2">
+                                <i data-feather="calendar" class="w-4 h-4"></i>
+                                Дата регистрации
+                            </h3>
+                            <p id="userCreatedAt" class="text-gray-700">Загрузка...</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1 flex items-center gap-2">
+                                <i data-feather="briefcase" class="w-4 h-4"></i>
+                                Опыт работы
+                            </h3>
+                            <p id="userExperience" class="text-gray-700">Загрузка...</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-1 flex items-center gap-2">
+                                <i data-feather="award" class="w-4 h-4"></i>
+                                Уровень
+                            </h3>
+                            <p id="userLevel" class="text-gray-700">Загрузка...</p>
+                        </div>
+                    </div>
+
+                    <!-- Навыки -->
+                    <div class="mt-6">
+                        <h3 class="text-sm font-medium text-gray-500 mb-3 flex items-center gap-2">
+                            <i data-feather="zap" class="w-4 h-4"></i>
+                            Ключевые навыки
+                        </h3>
+                        <div id="userSkills" class="space-y-2">
+                            <!-- Навыки загружаются динамически -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка - детальная информация -->
+            <div class="lg:col-span-3 space-y-8">
+                <!-- Достижения и награды -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <i data-feather="award" class="text-purple-600"></i>
+                        Достижения и награды
+                    </h2>
+                    <div id="userAchievements" class="prose max-w-none">
+                        <p class="text-gray-500">Загрузка...</p>
+                    </div>
+                </div>
+
+                <!-- Карьера и опыт -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <i data-feather="trending-up" class="text-purple-600"></i>
+                        Карьерный путь
+                    </h2>
+                    <div id="userCareer" class="timeline">
+                        <!-- Таймлайн загружается динамически -->
+                    </div>
+                </div>
+
+                <!-- Проекты сотрудника -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <i data-feather="folder" class="text-purple-600"></i>
+                            Проекты сотрудника
+                        </h2>
+                        <div class="text-sm text-gray-500">
+                            Всего проектов: <span id="totalProjectsCount">0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="userProjects" class="space-y-4">
+                        <p class="text-gray-500">Загрузка...</p>
+                    </div>
+                </div>
+
+                <!-- Статистика производительности -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <i data-feather="bar-chart-2" class="text-purple-600"></i>
+                        Статистика производительности
+                    </h2>
+                    <div id="userStats" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Статистика загружается динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+
+    <script>
+        let currentUser = null;
+        let allProjects = [];
+
+        // Детальные данные для каждого сотрудника
+        const userDetails = {
+            1: {
+                experience: "8 лет в IT-консалтинге",
+                level: "Старший специалист",
+                skills: [
+                    { name: "Управление проектами", level: 95 },
+                    { name: "Переговоры", level: 90 },
+                    { name: "Аналитика", level: 85 },
+                    { name: "Финансовое планирование", level: 88 }
+                ],
+                career: [
+                    { year: "2023-настоящее время", position: "Руководитель отдела продаж", company: "CardFlow", description: "Руководство отделом из 15 человек. Увеличение выручки на 45%." },
+                    { year: "2020-2023", position: "Старший менеджер", company: "ИТ-Консалт", description: "Работа с корпоративными клиентами. Закрытие сделок от 5 млн руб." },
+                    { year: "2017-2020", position: "Менеджер проектов", company: "ТехноСистемы", description: "Внедрение CRM систем для среднего бизнеса." },
+                    { year: "2015-2017", position: "Джуниор менеджер", company: "СофтСервис", description: "Обучение и первые проекты под руководством наставника." }
+                ],
+                achievements: "🏆 Лучший менеджер 2023 года\n🌟 Увеличил выручку отдела на 45%\n💼 Привлек 12 новых корпоративных клиентов\n🎯 Перевыполнил план продаж на 67%\n📈 Увеличил средний чек на 28%\n🤝 Закрыл самую крупную сделку компании - 28 млн руб.",
+                stats: {
+                    totalRevenue: "156,800,000 ₽",
+                    completedProjects: 47,
+                    successRate: "94%",
+                    clientSatisfaction: "4.8/5"
+                }
+            },
+            2: {
+                experience: "6 лет в системном администрировании",
+                level: "Эксперт",
+                skills: [
+                    { name: "Администрирование систем", level: 92 },
+                    { name: "Безопасность", level: 88 },
+                    { name: "Техническая документация", level: 85 },
+                    { name: "Обучение персонала", level: 80 }
+                ],
+                career: [
+                    { year: "2023-настоящее время", position: "Администратор системы", company: "CardFlow", description: "Внедрение и поддержка CRM системы. Обучение сотрудников." },
+                    { year: "2021-2023", position: "Системный администратор", company: "Данные и Решения", description: "Администрирование корпоративной инфраструктуры." },
+                    { year: "2019-2021", position: "ИТ-специалист", company: "ТехноПарк", description: "Техническая поддержка, обслуживание оборудования." },
+                    { year: "2017-2019", position: "Стажер", company: "ИТ-Академия", description: "Обучение и сертификация по системному администрированию." }
+                ],
+                achievements: "🔒 Внедрила систему контроля качества\n📊 Автоматизировала 15 бизнес-процессов\n🎓 Обучила 45+ сотрудников работе с системой\n⏱️ Сократила время обработки заявок на 40%\n🛡️ Внедрила двухфакторную аутентификацию\n📈 Повысила надежность системы до 99.9%",
+                stats: {
+                    totalRevenue: "28,500,000 ₽",
+                    completedProjects: 23,
+                    successRate: "98%",
+                    clientSatisfaction: "4.9/5"
+                }
+            },
+            3: {
+                experience: "7 лет в бизнес-аналитике",
+                level: "Ведущий аналитик",
+                skills: [
+                    { name: "Анализ данных", level: 95 },
+                    { name: "SQL", level: 90 },
+                    { name: "Tableau/Power BI", level: 88 },
+                    { name: "Статистика", level: 85 }
+                ],
+                career: [
+                    { year: "2023-настоящее время", position: "Старший аналитик", company: "CardFlow", description: "Разработка дашбордов и аналитических отчетов." },
+                    { year: "2020-2023", position: "Бизнес-аналитик", company: "Аналитика Про", description: "Анализ бизнес-процессов клиентов." },
+                    { year: "2018-2020", position: "Аналитик данных", company: "СтатРешения", description: "Обработка больших данных, создание отчетов." },
+                    { year: "2016-2018", position: "Младший аналитик", company: "Данные+", description: "Подготовка данных, создание визуализаций." }
+                ],
+                achievements: "📊 Разработала 5 успешных дашбордов\n🔍 Выявила 3 ключевые точки роста бизнеса\n📈 Увеличила точность прогнозов на 35%\n💡 Внедрила ML-модели для прогнозирования\n🎯 Снизила затраты на аналитику на 25%\n🏆 Победитель конкурса 'Лучший аналитик 2022'",
+                stats: {
+                    totalRevenue: "42,300,000 ₽",
+                    completedProjects: 31,
+                    successRate: "96%",
+                    clientSatisfaction: "4.7/5"
+                }
+            },
+            // Добавлю данные для остальных сотрудников...
+            5: {
+                experience: "5 лет в управлении проектами",
+                level: "Старший специалист",
+                skills: [
+                    { name: "Agile/Scrum", level: 88 },
+                    { name: "Управление рисками", level: 85 },
+                    { name: "Командная работа", level: 90 },
+                    { name: "Техническая документация", level: 82 }
+                ],
+                career: [
+                    { year: "2023-настоящее время", position: "Менеджер проектов", company: "CardFlow", description: "Управление IT-проектами для корпоративных клиентов." },
+                    { year: "2021-2023", position: "Project Manager", company: "DevTeam Pro", description: "Руководство командами разработки до 8 человек." },
+                    { year: "2019-2021", position: "Координатор проектов", company: "ТехноСтарт", description: "Координация между командами и клиентами." },
+                    { year: "2018-2019", position: "Стажер PM", company: "IT Solutions", description: "Изучение методологий управления проектами." }
+                ],
+                achievements: "✅ Завершил 10 проектов с превышением KPI\n🚀 Сократил сроки проектов на 15%\n💬 Улучшил коммуникацию с клиентами\n📊 Внедрил систему метрик проектов\n🎯 Достиг 98% удовлетворенности клиентов\n⭐ Получил 12 положительных отзывов",
+                stats: {
+                    totalRevenue: "78,200,000 ₽",
+                    completedProjects: 28,
+                    successRate: "95%",
+                    clientSatisfaction: "4.8/5"
+                }
+            },
+            19: {
+                experience: "12 лет в корпоративных продажах",
+                level: "Эксперт",
+                skills: [
+                    { name: "Стратегические продажи", level: 96 },
+                    { name: "Управление командой", level: 92 },
+                    { name: "Переговоры", level: 94 },
+                    { name: "Анализ рынка", level: 88 }
+                ],
+                career: [
+                    { year: "2023-настоящее время", position: "Старший менеджер", company: "CardFlow", description: "Руководство отделом корпоративных продаж." },
+                    { year: "2018-2023", position: "Руководитель отдела", company: "БизнесРешения", description: "Управление отделом из 12 менеджеров." },
+                    { year: "2014-2018", position: "Ключевой менеджер", company: "КорпТехнологии", description: "Работа с крупными корпоративными клиентами." },
+                    { year: "2011-2014", position: "Менеджер по продажам", company: "ИТ-Партнер", description: "Начало карьеры в IT-продажах." }
+                ],
+                achievements: "🏢 Руководитель отдела корпоративных продаж\n💰 Привлек 45+ корпоративных клиентов\n📈 Увеличил годовой оборот на 120%\n🎯 Закрыл 3 сделки > 50 млн руб.\n🌟 Вырастил 5 менеджеров до старших позиций\n🏆 Лучший руководитель отдела 2022",
+                stats: {
+                    totalRevenue: "245,600,000 ₽",
+                    completedProjects: 67,
+                    successRate: "97%",
+                    clientSatisfaction: "4.9/5"
+                }
+            },
+            23: {
+                experience: "20+ лет в ИТ-консалтинге",
+                level: "Гуру",
+                skills: [
+                    { name: "ИТ-консалтинг", level: 98 },
+                    { name: "Стратегическое планирование", level: 95 },
+                    { name: "Архитектура решений", level: 92 },
+                    { name: "Менторство", level: 90 }
+                ],
+                career: [
+                    { year: "2023-настоящее время", position: "Ведущий менеджер", company: "CardFlow", description: "Стратегическое консультирование ключевых клиентов." },
+                    { year: "2015-2023", position: "Партнер", company: "КонсалтГрупп", description: "Разработка ИТ-стратегий для крупного бизнеса." },
+                    { year: "2008-2015", position: "Старший консультант", company: "Deloitte", description: "Управление трансформационными проектами." },
+                    { year: "2003-2008", position: "ИТ-архитектор", company: "IBM", description: "Проектирование корпоративных систем." },
+                    { year: "2000-2003", position: "Разработчик", company: "Microsoft", description: "Разработка бизнес-приложений." }
+                ],
+                achievements: "🎓 20+ лет опыта в ИТ-консалтинге\n🏛️ Консультировал 50+ компаний из Fortune 500\n📚 Автор 3 книг по цифровой трансформации\n🎤 Регулярный спикер на международных конференциях\n🌟 Ментор для 30+ руководителей\n💡 Разработал 15 успешных ИТ-стратегий",
+                stats: {
+                    totalRevenue: "189,400,000 ₽",
+                    completedProjects: 89,
+                    successRate: "99%",
+                    clientSatisfaction: "5.0/5"
+                }
+            }
+        };
+
+        // Для остальных пользователей создам базовые данные
+        for (let i = 4; i <= 23; i++) {
+            if (!userDetails[i]) {
+                userDetails[i] = {
+                    experience: `${Math.floor(Math.random() * 10) + 3} лет в ${['IT', 'продажах', 'менеджменте', 'консалтинге'][i % 4]}`,
+                    level: ['Джуниор', 'Специалист', 'Старший специалист', 'Эксперт'][i % 4],
+                    skills: [
+                        { name: "Коммуникация", level: 70 + (i * 3) % 25 },
+                        { name: "Управление", level: 65 + (i * 5) % 30 },
+                        { name: "Аналитика", level: 60 + (i * 7) % 35 },
+                        { name: "Технические навыки", level: 75 + (i * 2) % 20 }
+                    ],
+                    career: [
+                        { year: "2023-настоящее время", position: "Менеджер", company: "CardFlow", description: "Работа над проектами компании." },
+                        { year: "2021-2023", position: "Специалист", company: "Предыдущая компания", description: "Развитие профессиональных навыков." },
+                        { year: "2019-2021", position: "Начинающий специалист", company: "Первая компания", description: "Старт карьеры в профессии." }
+                    ],
+                    achievements: "✅ Успешное выполнение проектов\n🎯 Достижение поставленных KPI\n💼 Работа с клиентами\n📈 Профессиональный рост\n🤝 Командная работа\n⭐ Положительные отзывы",
+                    stats: {
+                        totalRevenue: `${(15 + (i * 3))},${(i * 100)}0,000 ₽`,
+                        completedProjects: 10 + (i % 15),
+                        successRate: `${85 + (i % 12)}%`,
+                        clientSatisfaction: `${4 + (i % 10) / 10}.${i % 10}/5`
+                    }
+                };
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Загружаем данные пользователя из localStorage
+                const userData = localStorage.getItem('viewing_user_profile');
+                if (userData) {
+                    currentUser = JSON.parse(userData);
+                    displayUserInfo(currentUser);
+                    displayUserDetails(currentUser);
+                } else {
+                    showErrorPage();
+                    return;
+                }
+                
+                // Загружаем проекты
+                try {
+                    allProjects = await api.getProjects();
+                } catch (error) {
+                    allProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+                }
+                
+                displayUserProjects();
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showErrorPage();
+            }
+
+            feather.replace();
+        });
+
+        function showErrorPage() {
+            document.body.innerHTML = `
+                <custom-navbar></custom-navbar>
+                <div class="container mx-auto px-4 py-8 text-center">
+                    <div class="bg-red-50 border border-red-200 rounded p-8">
+                        <i data-feather="alert-triangle" class="w-12 h-12 text-red-600 mx-auto mb-4"></i>
+                        <h3 class="text-red-800 font-medium text-lg">Пользователь не найден</h3>
+                        <p class="text-red-600 mb-4">Не удалось загрузить данные профиля</p>
+                        <button onclick="window.location.href = 'users.html'" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                            Вернуться к списку пользователей
+                        </button>
+                    </div>
+                </div>
+            `;
+            feather.replace();
+        }
+
+        function displayUserInfo(user) {
+            document.getElementById('userName').textContent = user.full_name || 'Не указано';
+            document.getElementById('userRole').textContent = getRoleName(user.role);
+            document.getElementById('userPosition').textContent = user.position || 'Должность не указана';
+            document.getElementById('userEmail').textContent = user.email || 'Не указан';
+            document.getElementById('userPhone').textContent = user.phone || 'Не указан';
+            document.getElementById('userCreatedAt').textContent = user.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU') : 'Не указана';
+            
+            const statusElement = document.getElementById('userStatus');
+            statusElement.innerHTML = `<span class="px-3 py-1 text-sm rounded-full ${user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${user.status === 'active' ? 'Активен' : 'Неактивен'}</span>`;
+        }
+
+        function displayUserDetails(user) {
+            const details = userDetails[user.id] || userDetails[4]; // fallback
+            
+            // Опыт и уровень
+            document.getElementById('userExperience').textContent = details.experience;
+            document.getElementById('userLevel').textContent = details.level;
+            
+            // Навыки
+            const skillsContainer = document.getElementById('userSkills');
+            skillsContainer.innerHTML = details.skills.map(skill => `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>${skill.name}</span>
+                        <span>${skill.level}%</span>
+                    </div>
+                    <div class="skill-bar">
+                        <div class="skill-progress" style="width: ${skill.level}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Достижения
+            const achievementsElement = document.getElementById('userAchievements');
+            achievementsElement.innerHTML = details.achievements.split('\n').map(line => 
+                `<p class="flex items-start gap-2 mb-2"><span class="mt-1">${line.split(' ')[0]}</span><span>${line.split(' ').slice(1).join(' ')}</span></p>`
+            ).join('');
+            
+            // Карьера
+            const careerContainer = document.getElementById('userCareer');
+            careerContainer.innerHTML = details.career.map(item => `
+                <div class="timeline-item">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-semibold text-purple-600">${item.position}</h4>
+                            <span class="text-sm text-gray-500 bg-white px-2 py-1 rounded">${item.year}</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700 mb-1">${item.company}</p>
+                        <p class="text-sm text-gray-600">${item.description}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Статистика
+            const statsContainer = document.getElementById('userStats');
+            statsContainer.innerHTML = `
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600 mb-1">${details.stats.totalRevenue}</div>
+                    <div class="text-sm text-gray-600">Общая выручка</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600 mb-1">${details.stats.completedProjects}</div>
+                    <div class="text-sm text-gray-600">Завершено проектов</div>
+                </div>
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600 mb-1">${details.stats.successRate}</div>
+                    <div class="text-sm text-gray-600">Успешность проектов</div>
+                </div>
+            `;
+        }
+
+        function getRoleName(role) {
+            const roles = {
+                'admin': 'Администратор',
+                'analyst': 'Аналитик',
+                'user': 'Менеджер'
+            };
+            return roles[role] || role;
+        }
+
+        function displayUserProjects() {
+            if (!currentUser) return;
+            
+            const container = document.getElementById('userProjects');
+            const totalCount = document.getElementById('totalProjectsCount');
+            const userProjects = allProjects.filter(p => p.manager === currentUser.full_name);
+            
+            totalCount.textContent = userProjects.length;
+            
+            if (userProjects.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i data-feather="folder" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                        <p>У сотрудника пока нет проектов</p>
+                    </div>
+                `;
+                feather.replace();
+                return;
+            }
+            
+            let html = '';
+            userProjects.forEach(project => {
+                const profit = Number(project.revenue || 0) - Number(project.expenses || 0);
+                const progress = Math.min(Math.floor((Math.random() * 40) + 60), 100); // 60-100%
+                
+                html += `
+                    <div class="border-l-4 border-purple-600 p-4 bg-gray-50 rounded hover:bg-gray-100 transition">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="font-semibold text-lg">${project.project_name || 'Без названия'}</h3>
+                                <p class="text-sm text-gray-600">${project.organization || 'Клиент не указан'}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm px-2 py-1 rounded ${getStatusClass(project.status)}">${getStatusText(project.status)}</span>
+                                <div class="text-sm text-gray-500 mt-1">${project.created_at ? new Date(project.created_at).toLocaleDateString('ru-RU') : ''}</div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-sm text-gray-700 mb-3 line-clamp-2">${project.description || 'Описание не добавлено'}</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm mb-3">
+                            <div>
+                                <span class="text-gray-500">Выручка:</span>
+                                <div class="font-medium">${formatCurrency(project.revenue || 0)}</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Затраты:</span>
+                                <div class="font-medium">${formatCurrency(project.expenses || 0)}</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Прибыль:</span>
+                                <div class="font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(profit)}</div>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Прогресс:</span>
+                                <div class="font-medium">${progress}%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="skill-bar mb-2">
+                            <div class="skill-progress" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            feather.replace();
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'new': 'Новый',
+                'active': 'Активен',
+                'in_progress': 'В работе',
+                'completed': 'Завершён'
+            };
+            return map[status] || status;
+        }
+
+        function getStatusClass(status) {
+            const map = {
+                'new': 'bg-purple-100 text-purple-800',
+                'active': 'bg-green-100 text-green-800',
+                'in_progress': 'bg-yellow-100 text-yellow-800',
+                'completed': 'bg-blue-100 text-blue-800'
+            };
+            return map[status] || '';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ru-RU', { 
+                style: 'currency', 
+                currency: 'RUB',
+                minimumFractionDigits: 0 
+            }).format(amount);
+        }
+    </script>
+</body>
+</html>
